@@ -1,10 +1,9 @@
 {
     "type":"ServicesJson",
     "data": {
-      "recordIDPrefix": "redbox-mint.googlecode.com/services/",
       "data": {
-          "ID": "4",
-          "Name": "University of Examples - Mint OAI-PMH Interface",
+          "ID": "2",
+          "Name": "University of Examples2 - Mint OAI-PMH Interface",
           "Type": "harvest-oaipmh",
           "ANZSRC_FOR_1": "",
           "ANZSRC_FOR_2": "",
@@ -22,9 +21,6 @@
           "Access_Policy": "http://service.example.edu.au/access",
           "URI": "",
           "Description": "The Mint is an name-authority and vocabulary service that complements ReDBox."
-      },
-      "metadata": {
-          "dc.identifier": "redbox-mint.googlecode.com/services/4"
       }
     }
 }

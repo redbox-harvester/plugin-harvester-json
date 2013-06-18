@@ -1,0 +1,70 @@
+{
+    "type":"ServicesJson",
+    "data": {
+      "data": [
+        {
+          "ID": "2",
+          "Name": "University of Examples2 - Mint OAI-PMH Interface",
+          "Type": "harvest-oaipmh",
+          "ANZSRC_FOR_1": "",
+          "ANZSRC_FOR_2": "",
+          "ANZSRC_FOR_3": "",
+          "Location": "123 Example Street, City, STATE",
+          "Coverage_Temporal_From": "",
+          "Coverage_Temporal_To": "",
+          "Coverage_Spatial_Type": "",
+          "Coverage_Spatial_Value": "",
+          "Existence_Start": "",
+          "Existence_End": "",
+          "Website": "http://service.example.edu.au/",
+          "Data_Quality_Information": "http://service.example.edu.au/dataquality",
+          "Reuse_Information": "http://service.example.edu.au/reuse",
+          "Access_Policy": "http://service.example.edu.au/access",
+          "URI": "",
+          "Description": "The Mint is an name-authority and vocabulary service that complements ReDBox."
+        },
+        {
+          "ID": "3",
+          "Name": "University of Examples3 - Mint OAI-PMH Interface",
+          "Type": "harvest-oaipmh",
+          "ANZSRC_FOR_1": "",
+          "ANZSRC_FOR_2": "",
+          "ANZSRC_FOR_3": "",
+          "Location": "123 Example Street, City, STATE",
+          "Coverage_Temporal_From": "",
+          "Coverage_Temporal_To": "",
+          "Coverage_Spatial_Type": "",
+          "Coverage_Spatial_Value": "",
+          "Existence_Start": "",
+          "Existence_End": "",
+          "Website": "http://service.example.edu.au/",
+          "Data_Quality_Information": "http://service.example.edu.au/dataquality",
+          "Reuse_Information": "http://service.example.edu.au/reuse",
+          "Access_Policy": "http://service.example.edu.au/access",
+          "URI": "",
+          "Description": "The Mint is an name-authority and vocabulary service that complements ReDBox."
+        },
+        {
+          "ID": "4",
+          "Name": "University of Examples4 - Mint OAI-PMH Interface",
+          "Type": "harvest-oaipmh",
+          "ANZSRC_FOR_1": "",
+          "ANZSRC_FOR_2": "",
+          "ANZSRC_FOR_3": "",
+          "Location": "123 Example Street, City, STATE",
+          "Coverage_Temporal_From": "",
+          "Coverage_Temporal_To": "",
+          "Coverage_Spatial_Type": "",
+          "Coverage_Spatial_Value": "",
+          "Existence_Start": "",
+          "Existence_End": "",
+          "Website": "http://service.example.edu.au/",
+          "Data_Quality_Information": "http://service.example.edu.au/dataquality",
+          "Reuse_Information": "http://service.example.edu.au/reuse",
+          "Access_Policy": "http://service.example.edu.au/access",
+          "URI": "",
+          "Description": "The Mint is an name-authority and vocabulary service that complements ReDBox."
+        }
+      ]
+    }
+}
