@@ -87,7 +87,7 @@ public abstract class GenericJsonHarvester extends GenericHarvester {
 
 	protected String idPrefix;
 
-	protected String payloadId;
+	protected String mainPayloadId;
     
     
     public GenericJsonHarvester(String id, String name) {
@@ -134,7 +134,7 @@ public abstract class GenericJsonHarvester extends GenericHarvester {
 			if (idPrefix == null) {
 				throw new HarvesterException("harvester.recordIDPrefix is not defined in the harvest configuration.");
 			}
-			payloadId = harvestConfig.getString(DEFAULT_PAYLOAD_ID, "harvester", "payloadId");
+			mainPayloadId = harvestConfig.getString(DEFAULT_PAYLOAD_ID, "harvester", "payloadId");
 			configObject = updateHarvestFile(configFile);
 			rulesObject = updateHarvestFile(rulesFile);
 		} catch (StorageException e) {
@@ -159,7 +159,9 @@ public abstract class GenericJsonHarvester extends GenericHarvester {
     		log.debug("Number of objects in harvest list:"+harvestList.size());
     		for (JsonSimple jsonObj : harvestList) {
     			try {
-					oidSet.add(processJson(jsonObj));
+    				String oid = processJson(jsonObj);
+    				if (oid != null)
+    					oidSet.add(oid);
 				} catch (Exception e) {
 					failedList.add(jsonObj);
 				}
@@ -199,7 +201,12 @@ public abstract class GenericJsonHarvester extends GenericHarvester {
 			failedList.add(jsonObj);
 		}
     }
-    
+    /**
+     * Generic implementation is a combination of type, id prefix and the id field, in that order.
+     * 
+     * @param jsonData
+     * @return Object ID string
+     */
     protected String getOid(JsonSimple jsonData) {
     	return DigestUtils.md5Hex(type+  ":" + idPrefix + jsonData.getString("", idField));
     }
@@ -224,16 +231,18 @@ public abstract class GenericJsonHarvester extends GenericHarvester {
     	// create metadata
         JsonObject meta = new JsonObject();
         meta.put("dc.identifier", idPrefix + jsonData.getString(null, idField));
-    	storeJsonInObject(jsonData.getJsonObject(), meta, oid, payloadId, idPrefix);
+    	boolean wasStoredInMainPayload = storeJsonInObject(jsonData.getJsonObject(), meta, oid, mainPayloadId, idPrefix);
     	try {
-			processObject(oid);
+			processObject(oid, wasStoredInMainPayload);
 		} catch (StorageException e) {
 			throw new HarvesterException(e);
 		}
+    	if (!wasStoredInMainPayload) 
+    		oid = null;
     	return oid;
     }
     
-    protected void processObject(String oid) throws HarvesterException, StorageException {
+    protected void processObject(String oid, boolean wasStoredInMainPayload) throws HarvesterException, StorageException {
     	// get the object
         DigitalObject object = storage.getObject(oid);
         
@@ -248,19 +257,23 @@ public abstract class GenericJsonHarvester extends GenericHarvester {
         	log.error("Object has no metadata:" + oid);
         	throw new HarvesterException("Digital object has no metadata.");
         }
-        // TODO - objectId is redundant now?
-        props.setProperty("objectId", object.getId());
-        props.setProperty("scriptType", harvestConfig.getString(null,
-                "indexer", "script", "type"));
-        // Set our config and rules data as properties on the object
-        props.setProperty("rulesOid", rulesObject.getId());
-        props.setProperty("rulesPid", rulesObject.getSourceId());
-        props.setProperty("jsonConfigOid", configObject.getId());
-        props.setProperty("jsonConfigPid", configObject.getSourceId());
-        
-        JsonObject params = harvestConfig.getObject("indexer", "params");
-        for (Object key : params.keySet()) {
-            props.setProperty(key.toString(), params.get(key).toString());
+        if (wasStoredInMainPayload) {
+	        // TODO - objectId is redundant now?
+	        props.setProperty("objectId", object.getId());
+	        props.setProperty("scriptType", harvestConfig.getString(null,
+	                "indexer", "script", "type"));
+	        // Set our config and rules data as properties on the object
+	        props.setProperty("rulesOid", rulesObject.getId());
+	        props.setProperty("rulesPid", rulesObject.getSourceId());
+	        props.setProperty("jsonConfigOid", configObject.getId());
+	        props.setProperty("jsonConfigPid", configObject.getSourceId());
+	        
+	        JsonObject params = harvestConfig.getObject("indexer", "params");
+	        for (Object key : params.keySet()) {
+	            props.setProperty(key.toString(), params.get(key).toString());
+	        }
+        } else {
+        	props.setProperty("parked", "true");
         }
 
         // done with the object
@@ -299,15 +312,26 @@ public abstract class GenericJsonHarvester extends GenericHarvester {
     	return false;
     }
 	
-	protected void storeJsonInObject(JsonObject dataJson, JsonObject metaJson,
+	protected boolean storeJsonInObject(JsonObject dataJson, JsonObject metaJson,
             String oid, String payloadId, String idPrefix) throws HarvesterException {
 		// Does the object already exist?
         DigitalObject object = null;
+        boolean wasStoredInMainPayload = true;
         try {
             object = storage.getObject(oid);
-            storeJsonInPayload(dataJson, metaJson, object, payloadId, idPrefix);
+            // no exception thrown, object exists, determine if we should overwrite...
+            // @TODO: add configurability later
+            boolean shouldPark = true;
+            if (shouldPark) {
+            	wasStoredInMainPayload = false;
+            	String parkedPayloadId = "parked-metadata.json";
+            	storeJsonInPayload(dataJson, metaJson, object, parkedPayloadId, idPrefix);
+            } else {
+            	// merge it, overwriting similar fields...
+            	storeJsonInPayload(dataJson, metaJson, object, payloadId, idPrefix);
+            }
         } catch (StorageException ex) {
-        	//@TODO: Programming by exception, find a better way, perhaps in storage?
+        	//@TODO: Programming by exception, find a better way, perhaps add storage.objectExists()?
             // This is going to be brand new
             try {
                 object = StorageUtils.getDigitalObject(storage, oid);
@@ -317,7 +341,7 @@ public abstract class GenericJsonHarvester extends GenericHarvester {
             }
         }
         // Set the pending flag
-        if (object != null) {
+        if (wasStoredInMainPayload && object != null) {
             try {
                 object.getMetadata().setProperty("render-pending", "true");
                 object.close();
@@ -325,6 +349,7 @@ public abstract class GenericJsonHarvester extends GenericHarvester {
                 log.error("Error setting 'render-pending' flag: ", ex);
             }
         }
+        return wasStoredInMainPayload;
 	}	
 	/**
      * Store the processed data and metadata in a payload
