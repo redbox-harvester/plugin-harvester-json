@@ -3,7 +3,11 @@ package au.com.redboxresearchdata.fascinator.plugins;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.management.ManagementFactory;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -16,14 +20,23 @@ import javax.jms.MessageConsumer;
 import javax.jms.MessageProducer;
 import javax.jms.Session;
 import javax.jms.TextMessage;
+import javax.management.InstanceAlreadyExistsException;
+import javax.management.MBeanRegistrationException;
+import javax.management.MBeanServer;
+import javax.management.MalformedObjectNameException;
+import javax.management.NotCompliantMBeanException;
+import javax.management.ObjectName;
 
 import org.apache.activemq.ActiveMQConnectionFactory;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import au.com.redboxresearchdata.fascinator.harvester.GenericJsonHarvester;
+import au.com.redboxresearchdata.fascinator.harvester.HarvestItem;
+import au.com.redboxresearchdata.fascinator.mxbeans.JsonHarvestQueueMXBean;
 
 import com.googlecode.fascinator.api.PluginException;
 import com.googlecode.fascinator.api.PluginManager;
@@ -49,7 +62,7 @@ import com.googlecode.fascinator.common.storage.StorageUtils;
  * @author Shilo Banihit
  * 
  */
-public class JsonHarvestQueueConsumer implements GenericListener {
+public class JsonHarvestQueueConsumer implements GenericListener, JsonHarvestQueueMXBean {
 	
 	/** Service Loader will look for this */
     public static final String LISTENER_ID = "jsonHarvester";
@@ -101,6 +114,14 @@ public class JsonHarvestQueueConsumer implements GenericListener {
     
     /** Default tool chain queue */
     private static final String DEFAULT_TOOL_CHAIN_QUEUE = "transactionManager";
+    
+    private JsonSimpleConfig config;
+    
+    private Map<String, HarvestItem> failedJsonMap;
+    
+    private List<String> failedJsonReq;
+    
+    private Map<String, GenericJsonHarvester> harvesters;
 
     public JsonHarvestQueueConsumer() {
     	 thread = new Thread(this, LISTENER_ID);
@@ -132,7 +153,6 @@ public class JsonHarvestQueueConsumer implements GenericListener {
             consumer = session.createConsumer(session.createQueue(QUEUE_ID));
             consumer.setMessageListener(this);
 
-            // broadcast = session.createTopic(MessagingServices.MESSAGE_TOPIC);
             producer = session.createProducer(null);
             producer.setDeliveryMode(DeliveryMode.PERSISTENT);
 
@@ -140,9 +160,26 @@ public class JsonHarvestQueueConsumer implements GenericListener {
             
             toolChainEntry = globalConfig.getString(DEFAULT_TOOL_CHAIN_QUEUE,
                     "messaging", "toolChainQueue");
+            
+            failedJsonMap = new HashMap<String, HarvestItem>();
+            failedJsonReq = new ArrayList<String>();
+            harvesters = new HashMap<String, GenericJsonHarvester>();
+            // registering managed bean...
+            MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
+            ObjectName mxbeanName = new ObjectName("au.com.redboxresearchdata.fascinator.plugins:type=JsonHarvestQueue");
+            mbs.registerMBean(this, mxbeanName);
+            
         } catch (JMSException ex) {
             log.error("Error starting message thread!", ex);
-        }
+        } catch (MalformedObjectNameException e) {
+        	log.error("Error configuring MBean, invalid name", e);
+		} catch (InstanceAlreadyExistsException e) {
+			log.error("Error configuring MBean, instance exists.", e);
+		} catch (MBeanRegistrationException e) {
+			log.error("Error registering MBean. ", e);
+		} catch (NotCompliantMBeanException e) {
+			log.error("Error configuring Mbean, non-compliant!", e);
+		}
     }
     
     /**
@@ -217,45 +254,10 @@ public class JsonHarvestQueueConsumer implements GenericListener {
      * "type" -  indicates which harvest config file to use, maps to "{portal.harvestFiles}/{type}.json"
      */
 	public void onMessage(Message message) {
-
         try {
         	String text = ((TextMessage) message).getText();
         	log.info(name + ", got message: " + text);
-			JsonSimple json = new JsonSimple(text);
-			// prepare for the harvest
-			String type = json.getString(null, "type");
-			if (type == null) {
-				log.error("No type specified, ignoring object:" + text);
-				return;
-			}
-			String configFilePath = globalConfig.getString(null, "portal", "harvestFiles") + "/" + type + ".json";
-			File harvestConfigFile = new File(configFilePath);
-			if (!harvestConfigFile.exists()) {
-				log.error("Harvest config file not found, please check the set up. Ignoring object:" + text);
-				return;
-			}
-			log.info("Using config file path:" + configFilePath);
-			JsonSimple harvestConfig = new JsonSimple(harvestConfigFile);
-			String rulesFilePath = harvestConfig.getString(null, "indexer", "script", "rules");
-			File rulesFile = new File(rulesFilePath);
-			if (!rulesFile.exists()) {
-				log.error("Rules file not found, please check the set up:" + rulesFilePath);
-				return;
-			}
-			log.info("Using rules file path:" + rulesFilePath);
-			GenericJsonHarvester harvester = (GenericJsonHarvester) PluginManager.getHarvester(type, storage);
-			if (harvester == null) {
-				log.error("Harvester not found for type:" + type + ". Please check your configuration.");
-				return;
-			}
-			JsonSimple data = new JsonSimple(json.getObject("data"));
-			log.debug("Data json is:" + data.toString(true));
-			Set<String> oids = harvester.harvest(data, type, harvestConfigFile, rulesFile);
-			log.debug("Number of Objects harvested:" + oids.size());
-			for (String oid : oids) {
-				processObject(oid, false, harvestConfig);
-				log.info("JSON Object on the toolchain:" + oid);
-			}
+			processJsonText(text);
         } catch (JMSException jmse) {
             log.error("Failed to send/receive message: {}", jmse.getMessage());
         } catch (IOException ioe) {
@@ -265,9 +267,104 @@ public class JsonHarvestQueueConsumer implements GenericListener {
         	log.error("Stack trace:", ex);
         }
 	}
+
+	protected void processJsonText(String text) throws IOException,
+			HarvesterException, TransformerException, StorageException,
+			MessagingException, Exception {
+		JsonSimple json = new JsonSimple(text);
+		processJson(json);
+	}
+	
+	protected void logFailedRequest(String errmsg, JsonSimple json) {
+		String text = json.toString();
+		json.getJsonObject().put("error",  errmsg);
+		log.error( errmsg + text);
+		failedJsonReq.add(json.toString());
+	}
+
+	protected synchronized void processJson(JsonSimple json)
+			throws IOException, PluginException, HarvesterException,
+			TransformerException, StorageException, MessagingException,
+			Exception {
+		// prepare for the harvest
+		String type = json.getString(null, "type");
+		log.debug("Got request to process JSON of type:" + type);
+		if (type == null) {
+			logFailedRequest("No type specified, ignoring object....", json);
+			return;
+		}
+		String configFilePath = globalConfig.getString(null, "portal", "harvestFiles") + "/" + type + ".json";
+		File harvestConfigFile = new File(configFilePath);
+		if (!harvestConfigFile.exists()) {
+			logFailedRequest("Harvest config file not found, please check the set up. Ignoring object...", json);
+			return;
+		}
+		log.info("Using config file path:" + configFilePath);
+		JsonSimple harvestConfig = new JsonSimple(harvestConfigFile);
+		String rulesFilePath = harvestConfig.getString(null, "indexer", "script", "rules");
+		File rulesFile = new File(rulesFilePath);
+		if (!rulesFile.exists()) {
+			logFailedRequest("Rules file not found, please check the set up...", json);
+			return;
+		}
+		log.info("Using rules file path:" + rulesFilePath);
+		GenericJsonHarvester harvester = harvesters.get(type);
+		if (harvester == null) {
+			harvester = (GenericJsonHarvester) PluginManager.getHarvester(type, storage);
+			if (harvester == null) {
+				logFailedRequest("Harvester not found for type:" + type + ". Please check your configuration...", json);
+				return;
+			}
+			harvester.init(harvestConfigFile);
+			harvester.setShouldPark(config.getBoolean(false, "shouldPark"));
+			harvesters.put(type, harvester);
+		}
+		JsonSimple data = new JsonSimple(json.getObject("data"));
+		log.debug("Data json is:" + data.toString(true));
+		List<HarvestItem> harvestList = harvester.harvest(data, type, harvestConfigFile, rulesFile);
+		log.debug("Number of Objects in list:" + harvester.getItemList().size());
+		log.debug("Number of Objects in harvest list:" + harvestList.size());
+		log.debug("Number of Objects successfully harvested:" + harvester.getSuccessOidList().size());
+		for (HarvestItem item : harvestList) {
+			if (item.isShouldBeTransformed()) {
+				String oid = item.getOid();
+				transformObject(oid, false, harvestConfig);
+				log.info("JSON Object on the toolchain, oid:" + oid);
+			}
+		}
+		// check if there are any failed items...
+		if ( harvester.getItemList().size() > 0 && 
+			(harvester.getItemList().size() != harvestList.size())  
+				|| (harvestList.size() != harvester.getSuccessOidList().size()) ) {
+			log.error("There are items that failed to harvest..");
+			for (HarvestItem item : harvester.getItemList()) {
+				if (!item.isHarvested()) {
+					JsonSimple jsonData = (JsonSimple) item.getData();
+					JsonObject jsonObj = new JsonObject();
+					jsonObj.put("type", type);
+					JsonObject dataObj = new JsonObject();
+					dataObj.put("data", jsonData.getJsonObject());
+					jsonObj.put("data", dataObj);
+					JsonSimple failedJson = new JsonSimple(jsonObj);
+					item.setData(failedJson);
+					log.error("Failed hid:" + item.getHid());
+					failedJsonMap.put(item.getHid(), item);
+					if (!item.isValid()) {
+						// failed validation...
+						log.error("Failed validation:" + failedJson.toString(true));
+					}
+					if (item.isValid() && !item.isHarvested()) {
+						// exception thrown while harvesting...
+						log.error("Failed harvest:" + failedJson.toString(true));
+					}
+				}
+			}
+			log.error(getFailedJsonList());
+		}
+	}
 	
     /**
-     * Process each objects
+     * Place objects in the toolchain for transformation. Object eventually gets indexed.
      * 
      * @param oid Object Id
      * @param commit Flag to commit after indexing
@@ -275,7 +372,7 @@ public class JsonHarvestQueueConsumer implements GenericListener {
      * @throws TransformerException If transformer fail to transform the object
      * @throws MessagingException If the object could not be queue'd
      */
-    private void processObject(String oid, boolean commit, JsonSimple harvestConfig)
+    private void transformObject(String oid, boolean commit, JsonSimple harvestConfig)
             throws TransformerException, StorageException, MessagingException, Exception {
         // put in event log
         sentMessage(oid, "modify");
@@ -327,6 +424,7 @@ public class JsonHarvestQueueConsumer implements GenericListener {
     }
 
 	public void init(JsonSimpleConfig config) throws Exception {
+		this.config = config;
 		name = config.getString(null, "config", "name");
         QUEUE_ID = name;
         thread.setName(name);
@@ -384,4 +482,57 @@ public class JsonHarvestQueueConsumer implements GenericListener {
         }
 	}
 
+	
+	public void harvestJsonText(String text) {
+		try {
+			processJsonText(text);
+		} catch (Exception e) {
+			log.error("Error while harvesting JSON: ", e);
+		}
+	}
+
+	public synchronized String getFailedJsonList() {
+		return "[\"" + StringUtils.join(failedJsonMap.keySet(), "\",\"") + "\"]";
+	}
+
+	public synchronized String getFailedJsonText(String harvestId) {
+		return failedJsonMap.get(harvestId).getData().toString();
+	}
+
+	public synchronized void setFailedJsonText(String harvestId, String json) {
+		HarvestItem item = failedJsonMap.get(harvestId);
+		try {
+			item.setData(new JsonSimple(json));
+		} catch (IOException e) {
+			log.error("Please ensure this text is a valid JSON: " + json);
+		}
+	}
+
+	/**
+	 * Attempts a reharvest of the specified harvest id, removing it from the failed map.
+	 *  
+	 */
+	public synchronized void reharvestFailedJson(String harvestId) {
+		HarvestItem item = failedJsonMap.get(harvestId);
+		failedJsonMap.remove(harvestId);
+		JsonSimple jsonData = (JsonSimple)item.getData();
+		try {
+			processJson(jsonData);
+		} catch (Exception ex) {
+			log.error("Error while reharvesting JSON: " + jsonData.toString(true), ex);
+		}
+	}
+
+	public synchronized void removeFailedJson(String harvestId) {
+		failedJsonMap.remove(harvestId);
+	}
+
+	public synchronized String getFailedRequests() {
+		return "[" + StringUtils.join(failedJsonReq, ",") + "]";
+	}
+
+	public synchronized void clearFailedRequests() {
+		failedJsonReq.clear();
+	}
+		
 }

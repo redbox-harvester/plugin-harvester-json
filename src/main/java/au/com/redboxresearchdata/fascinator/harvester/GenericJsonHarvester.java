@@ -25,6 +25,7 @@ import com.googlecode.fascinator.api.storage.Storage;
 import com.googlecode.fascinator.api.storage.StorageException;
 import com.googlecode.fascinator.common.JsonObject;
 import com.googlecode.fascinator.common.JsonSimple;
+import com.googlecode.fascinator.common.JsonSimpleConfig;
 import com.googlecode.fascinator.common.harvester.impl.GenericHarvester;
 import com.googlecode.fascinator.common.messaging.MessagingException;
 import com.googlecode.fascinator.common.messaging.MessagingServices;
@@ -62,13 +63,12 @@ public abstract class GenericJsonHarvester extends GenericHarvester {
     private JsonSimple data;
     
     /** List of objects to harvest. Will be cleared as soon as a new harvest is requested **/
-    protected List<JsonSimple> harvestList;
+    protected List<HarvestItem> harvestList;
     
-    /** List of successfully processed oids. Will be cleared as soon as new harvest is requested **/
-    protected List<String> successIds;
+    private List<String> successOidList;
     
-    /** List of Json objects that failed validation. Will be cleared as soon as new harvest is requested **/
-    protected List<JsonSimple> failedList;
+    /** The entire harvest list */
+    private List<HarvestItem> itemList;
     
     /** Messaging services */
     protected MessagingServices messaging;
@@ -88,7 +88,8 @@ public abstract class GenericJsonHarvester extends GenericHarvester {
 	protected String idPrefix;
 
 	protected String mainPayloadId;
-    
+	
+	protected boolean shouldPark;
     
     public GenericJsonHarvester(String id, String name) {
 		super(id, name);
@@ -118,9 +119,9 @@ public abstract class GenericJsonHarvester extends GenericHarvester {
      * 
      * @param sourceJsonStr - JSON string to harvest - see the class comments for the basic structure 
      * @return List of Object Ids.
-     * @throws HarvesterException
+     * @throws HarvesterException 
      */
-    public Set<String> harvest(JsonSimple data, String type, File configFile, File rulesFile) throws HarvesterException{
+    public List<HarvestItem> harvest(JsonSimple data, String type, File configFile, File rulesFile) throws HarvesterException{
     	try {
 			this.data = data;
 			this.configFile = configFile;
@@ -142,10 +143,21 @@ public abstract class GenericJsonHarvester extends GenericHarvester {
 		} catch (IOException e) {
 			throw new HarvesterException(e);
 		}
-    	return getObjectIdList();
+    	return processHarvestList();
+    }
+    
+    public List<HarvestItem> processHarvestList() throws HarvesterException {
+    	if (data!=null) {
+    		buildHarvestList();
+	    	for (HarvestItem item : harvestList) {
+				processJson(item);
+				successOidList.add(item.getOid());
+	    	}
+    	}
+    	return harvestList;
     }
     /**
-     * Gets a list of digital object IDs. Validates and persists the object in storage.
+     * Gets a list of digital object IDs successfully harvested.
      * 
      *  If there are no objects, this method should return an empty list, not null.
      * 
@@ -153,23 +165,11 @@ public abstract class GenericJsonHarvester extends GenericHarvester {
      * @throws HarvesterException if there was an error retrieving the objects
      */
     public Set<String> getObjectIdList() throws HarvesterException {
-    	if (data != null) {
-    		HashSet<String> oidSet= new HashSet<String>();
-    		buildHarvestList();
-    		log.debug("Number of objects in harvest list:"+harvestList.size());
-    		for (JsonSimple jsonObj : harvestList) {
-    			try {
-    				String oid = processJson(jsonObj);
-    				if (oid != null)
-    					oidSet.add(oid);
-				} catch (Exception e) {
-					failedList.add(jsonObj);
-				}
-    		}
-    		data = null;
-    		return oidSet;
+    	HashSet<String> oidSet= new HashSet<String>();
+    	if (data != null && successOidList != null) {
+    		oidSet.addAll(successOidList);
     	}
-    	return null;
+    	return oidSet;
     }
     
     /**
@@ -178,9 +178,9 @@ public abstract class GenericJsonHarvester extends GenericHarvester {
      */
     public void buildHarvestList() throws HarvesterException {
       	type = data.getString(null, "type");
-		harvestList = new ArrayList<JsonSimple>();
-		failedList = new ArrayList<JsonSimple>();
-		successIds = new ArrayList<String>();
+		harvestList = new ArrayList<HarvestItem>();
+		itemList = new ArrayList<HarvestItem>();
+		successOidList = new ArrayList<String>();
 		JSONArray dataArray = data.getArray("data");
 		if (dataArray == null) { 
 			log.debug("Data is not an array.");
@@ -194,11 +194,14 @@ public abstract class GenericJsonHarvester extends GenericHarvester {
     }
     
     protected void addToHarvestList(JsonSimple jsonObj) {
+    	HarvestItem item = new HarvestItem("", jsonObj, false, true, false);
+    	item.setHid(getHarvestId(jsonObj));
+    	itemList.add(item);
     	// validation is deferred to sub-classes
 		if (isValidJson(jsonObj)) {
-			harvestList.add(jsonObj);
+			harvestList.add(item);
 		} else {
-			failedList.add(jsonObj);
+			item.setValid(false);
 		}
     }
     /**
@@ -209,6 +212,16 @@ public abstract class GenericJsonHarvester extends GenericHarvester {
      */
     protected String getOid(JsonSimple jsonData) {
     	return DigestUtils.md5Hex(type+  ":" + idPrefix + jsonData.getString("", idField));
+    }
+    
+    /**
+     * Generic implementation is a combination of type, the entire json.
+     * 
+     * @param jsonData
+     * @return Object ID string
+     */
+    protected String getHarvestId(JsonSimple jsonData) {
+    	return DigestUtils.md5Hex(type+  ":" + jsonData.toString() + ":" + System.currentTimeMillis());
     }
     
     /**
@@ -226,20 +239,21 @@ public abstract class GenericJsonHarvester extends GenericHarvester {
      * @return Object Identifier
      * @throws Exception 
      */
-    protected String processJson(JsonSimple jsonData) throws HarvesterException {
+    protected void processJson(HarvestItem item) throws HarvesterException {
+    	JsonSimple jsonData = (JsonSimple) item.getData();
     	String oid = getOid(jsonData);
     	// create metadata
         JsonObject meta = new JsonObject();
         meta.put("dc.identifier", idPrefix + jsonData.getString(null, idField));
     	boolean wasStoredInMainPayload = storeJsonInObject(jsonData.getJsonObject(), meta, oid, mainPayloadId, idPrefix);
+    	item.setShouldBeTransformed(wasStoredInMainPayload);
+    	item.setOid(oid);
     	try {
 			processObject(oid, wasStoredInMainPayload);
+			item.setHarvested(true);
 		} catch (StorageException e) {
 			throw new HarvesterException(e);
 		}
-    	if (!wasStoredInMainPayload) 
-    		oid = null;
-    	return oid;
     }
     
     protected void processObject(String oid, boolean wasStoredInMainPayload) throws HarvesterException, StorageException {
@@ -320,8 +334,6 @@ public abstract class GenericJsonHarvester extends GenericHarvester {
         try {
             object = storage.getObject(oid);
             // no exception thrown, object exists, determine if we should overwrite...
-            // @TODO: add configurability later
-            boolean shouldPark = true;
             if (shouldPark) {
             	wasStoredInMainPayload = false;
             	String parkedPayloadId = "parked-metadata.json";
@@ -470,5 +482,21 @@ public abstract class GenericJsonHarvester extends GenericHarvester {
 
 	protected void setData(JsonSimple data) {
 		this.data = data;
+	}
+
+	public List<String> getSuccessOidList() {
+		return successOidList;
+	}
+
+	public List<HarvestItem> getItemList() {
+		return itemList;
+	}
+
+	public boolean isShouldPark() {
+		return shouldPark;
+	}
+
+	public void setShouldPark(boolean shouldPark) {
+		this.shouldPark = shouldPark;
 	}
 }

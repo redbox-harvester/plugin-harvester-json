@@ -33,7 +33,8 @@ public class ServiceJsonHarvester extends GenericJsonHarvester {
 	 */
 	@Override
 	protected boolean isValidJson(JsonSimple json) {
-		boolean isValid = json.getString(null, idField) != null;
+		String idVal = json.getString(null, idField);
+		boolean isValid = idVal != null && idVal.trim().length() > 0;
 		log.debug("isValidJson:" + isValid);
 		if (!isValid) {
 			log.error("Invalid JSON:" + json.toString(true));
