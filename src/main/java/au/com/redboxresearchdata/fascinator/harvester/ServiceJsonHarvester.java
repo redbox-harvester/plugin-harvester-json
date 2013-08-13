@@ -31,7 +31,7 @@ import com.googlecode.fascinator.common.messaging.MessagingServices;
  * @author Shilo Banihit
  *
  */
-public class ServiceJsonHarvester extends GenericJsonHarvester {
+public class ServiceJsonHarvester extends BaseJsonHarvester {
 	
     
     /** Logging */

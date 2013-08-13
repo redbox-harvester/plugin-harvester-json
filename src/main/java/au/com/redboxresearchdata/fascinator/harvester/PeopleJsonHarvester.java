@@ -23,7 +23,7 @@ import org.slf4j.LoggerFactory;
 import com.googlecode.fascinator.common.JsonSimple;
 import com.googlecode.fascinator.common.messaging.MessagingServices;
 
-public class PeopleJsonHarvester extends GenericJsonHarvester {
+public class PeopleJsonHarvester extends BaseJsonHarvester {
 
 	/** Logging */
     private Logger log = LoggerFactory.getLogger(MessagingServices.class);
