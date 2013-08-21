@@ -132,6 +132,23 @@ public abstract class BaseJsonHarvester extends GenericHarvester {
 	public void setStorage(Storage storage) {
 		this.storage = storage;
 	}
+	
+	public void loadConfig() throws HarvesterException {
+		idField = harvestConfig.getString("", "harvester", "idField");
+		if (idField == null) {
+			throw new HarvesterException(
+					"harvester.idField is not defined in the harvest configuration.");
+		}
+		log.debug("idField is:" + idField);
+		idPrefix = harvestConfig.getString("", "harvester",
+				"recordIDPrefix");
+		if (idPrefix == null) {
+			throw new HarvesterException(
+					"harvester.recordIDPrefix is not defined in the harvest configuration.");
+		}
+		mainPayloadId = harvestConfig.getString(DEFAULT_PAYLOAD_ID,
+				"harvester", "payloadId");
+	}
 
 	/**
 	 * Convenience method to start the harvest of objects.
@@ -146,19 +163,8 @@ public abstract class BaseJsonHarvester extends GenericHarvester {
 			throws HarvesterException {
 		try {
 			this.data = data;
-			idField = harvestConfig.getString("", "harvester", "idField");
-			if (idField == null) {
-				throw new HarvesterException(
-						"harvester.idField is not defined in the harvest configuration.");
-			}
-			idPrefix = harvestConfig.getString("", "harvester",
-					"recordIDPrefix");
-			if (idPrefix == null) {
-				throw new HarvesterException(
-						"harvester.recordIDPrefix is not defined in the harvest configuration.");
-			}
-			mainPayloadId = harvestConfig.getString(DEFAULT_PAYLOAD_ID,
-					"harvester", "payloadId");
+			this.type = type;
+			loadConfig();
 			configObject = updateHarvestFile(configFile);
 			rulesObject = updateHarvestFile(rulesFile);
 		} catch (StorageException e) {
@@ -202,14 +208,15 @@ public abstract class BaseJsonHarvester extends GenericHarvester {
 	 * 
 	 */
 	public void buildHarvestList() throws HarvesterException {
-		type = data.getString(null, "type");
 		harvestList = new ArrayList<HarvestItem>();
 		itemList = new ArrayList<HarvestItem>();
 		successOidList = new ArrayList<String>();
 		JSONArray dataArray = data.getArray("data");
 		if (dataArray == null) {
 			log.debug("Data is not an array.");
-			addToHarvestList(new JsonSimple(data.getObject("data")));
+			JsonSimple jsonObj = new JsonSimple(data.getObject("data"));
+			log.debug("Data is: " + jsonObj.toString(true));
+			addToHarvestList(jsonObj);
 		} else {
 			log.debug("Data is an array");
 			for (JsonSimple jsonObj : JsonSimple.toJavaList(dataArray)) {
