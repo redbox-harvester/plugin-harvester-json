@@ -50,7 +50,7 @@ public class ServicesJsonHarvesterTest {
 	public static void tearDown() throws Exception {
 	}
 
-	@Test
+   @Test
 	public void testIsValidJson() {
 		assertTrue(harvester.isValidJson(new JsonSimple(validData.getObject("data","data"))));
 	}
