@@ -49,10 +49,10 @@ public class DatasetJsonHarvester extends GenericJsonHarvester {
 		if (HANDLING_TYPE_OVERWRITE.equalsIgnoreCase(handledAs)) {
 			// create the workflow.metadata file
 			JsonSimple workflowmeta = new JsonSimple();
-			workflowmeta.getJsonObject().put("id", "dataset");
-			workflowmeta.getJsonObject().put("step", "investigation");
-			workflowmeta.getJsonObject().put("pageTitle", "Metadata Record");
-			workflowmeta.getJsonObject().put("label", "Investigation");
+			workflowmeta.getJsonObject().put("id", dataJson.getString("dataset", "workflowId"));
+			workflowmeta.getJsonObject().put("step", dataJson.getString("investigation", "workflowStep"));
+			workflowmeta.getJsonObject().put("pageTitle", dataJson.getString("Metadata Record", "workflowPageTitle") );
+			workflowmeta.getJsonObject().put("label", dataJson.getString("Investigation", "workflowLabel") );
 			JsonObject formData = workflowmeta.writeObject("formData");
 			formData.put("title", dataJson.getString("", "title"));
 			formData.put("description", dataJson.getString("", "description"));
