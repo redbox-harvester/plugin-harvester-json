@@ -1,3 +1,4 @@
 au.com.redboxresearchdata.fascinator.harvester.ServiceJsonHarvester
 au.com.redboxresearchdata.fascinator.harvester.PeopleJsonHarvester
 au.com.redboxresearchdata.fascinator.harvester.GenericJsonHarvester
+au.com.redboxresearchdata.fascinator.harvester.DatasetJsonHarvester

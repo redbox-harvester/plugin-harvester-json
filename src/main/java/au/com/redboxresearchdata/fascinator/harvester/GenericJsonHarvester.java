@@ -57,6 +57,10 @@ public class GenericJsonHarvester extends BaseJsonHarvester {
     	super("GenericJson", "Generic JSON Harvester");
     }
     
+    public GenericJsonHarvester(String name, String description) {
+    	super(name, description);
+    }
+    
 	/**
 	 * Ensures the incoming JSON has an none-empty ID and owner field.
 	 * 
@@ -107,8 +111,8 @@ public class GenericJsonHarvester extends BaseJsonHarvester {
 	 * 
 	 */
 	@Override
-	protected void setCustomObjectMetadata(String oid, DigitalObject object, Properties metadata, JsonSimple dataJson, boolean wasStoredInMainPayload) throws HarvesterException {
-		if (wasStoredInMainPayload) {
+	protected void setCustomObjectMetadata(String oid, DigitalObject object, Properties metadata, JsonSimple dataJson, String handledAs) throws HarvesterException {
+		if (HANDLING_TYPE_OVERWRITE.equalsIgnoreCase(handledAs)) {
 			metadata.setProperty("render-pending", "true");
 			metadata.setProperty("owner", dataJson.getString(harvestConfig.getString("guest",  "default-owner"), "owner")); // permissive
 			String payloadBase = harvestConfig.getString(null, "harvester", "payloadBase");

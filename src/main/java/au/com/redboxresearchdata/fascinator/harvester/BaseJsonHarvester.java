@@ -28,12 +28,14 @@ import java.util.Properties;
 import java.util.Set;
 
 import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.json.simple.JSONArray;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.googlecode.fascinator.api.PluginDescription;
+import com.googlecode.fascinator.api.PluginException;
 import com.googlecode.fascinator.api.harvester.Harvester;
 import com.googlecode.fascinator.api.harvester.HarvesterException;
 import com.googlecode.fascinator.api.storage.DigitalObject;
@@ -50,7 +52,7 @@ import com.googlecode.fascinator.common.storage.StorageUtils;
 import com.googlecode.fascinator.common.storage.impl.GenericPayload;
 
 /**
- * Basic class that harvests JSONSimple documents.
+ * Basic class that harvests JSON documents.
  * 
  * The basic JSON Structure should be:
  * 
@@ -65,6 +67,11 @@ public abstract class BaseJsonHarvester extends GenericHarvester {
 
 	/** Logging */
 	private static Logger log = LoggerFactory.getLogger(BaseJsonHarvester.class);
+	
+	/** Handling Types */
+	public static final String HANDLING_TYPE_OVERWRITE = "overwrite",
+						  	   HANDLING_TYPE_PARK = "park",
+						       HANDLING_TYPE_IGNORE_IF_EXISTS = "ignore_if_exists";
 
 	/** Default payload ID */
 	protected static final String DEFAULT_PAYLOAD_ID = "metadata.json";
@@ -83,23 +90,27 @@ public abstract class BaseJsonHarvester extends GenericHarvester {
 	 **/
 	protected List<HarvestItem> harvestList;
 
-	private List<String> successOidList;
+	protected List<String> successOidList;
 
 	/** The entire harvest list */
-	private List<HarvestItem> itemList;
+	protected List<HarvestItem> itemList;
 
 	/** Messaging services */
 	protected MessagingServices messaging;
 
+	protected File rulesConfigFile;
+	
 	protected File rulesFile;
 
 	protected File configFile;
 
 	protected DigitalObject rulesObject;
 
-	protected DigitalObject configObject;
+	protected DigitalObject rulesConfigObject;
 
 	protected JsonSimple harvestConfig;
+	
+	private JsonSimple rulesConfig;
 
 	protected String idField;
 
@@ -108,19 +119,84 @@ public abstract class BaseJsonHarvester extends GenericHarvester {
 	protected String mainPayloadId;
 
 	protected boolean shouldPark;
+	
+	protected String handlingType;
+	
+	/** If this is ready to harvest. */
+	protected boolean isReady;
+	
+	/** Error message */
+	protected String errorMessage;
 
 	public BaseJsonHarvester(String id, String name) {
-		super(id, name);
+		super(id, name);		
 	}
 
+	/** Gets called by init(File) and init(String) after setting the config, annoyingly, config is private. */
 	@Override
 	public void init() throws HarvesterException {
 		try {
-			messaging = MessagingServices.getInstance();
+			messaging = MessagingServices.getInstance();			
+			try {
+				harvestConfig = new JsonSimple(configFile);
+			} catch (IOException e) {
+				errorMessage = "IO Error loading main configuration file.";
+				throw new Exception(e);								
+			}			
+			String rulesConfigFilePath = harvestConfig.getString(null, "harvester", "rulesConfig");
+			log.debug("Initialising Harvester, using config path:" + rulesConfigFilePath);
+			rulesConfigFile = new File(rulesConfigFilePath);
+			if (!rulesConfigFile.exists()) {
+				errorMessage = "Rules config file not found: " + rulesConfigFilePath;
+				throw new Exception(errorMessage);				
+			}
+			rulesConfig = new JsonSimple(rulesConfigFile);			
+			String rulesFilePath = rulesConfig.getString("", "indexer", "script", "rules");
+			log.debug("Initialising Harvester, checking if rulesFilePath exists:" + rulesFilePath);
+			rulesFile = new File(rulesFilePath);
+			if (!rulesFile.exists()) {
+				// try again this time appending the base directory of the rules config path						
+				rulesFilePath = FilenameUtils.getFullPath(rulesConfigFilePath) + rulesFilePath;
+				log.debug("Initialising Harvester, nope wasn't there, trying if this exists:" + rulesFilePath);
+				rulesFile = new File(rulesFilePath);
+				if (!rulesFile.exists()) {
+					errorMessage = "Rules file not found '"+rulesFilePath+"', please check the set up..."; 				
+					throw new Exception(errorMessage);
+				}
+			}
+			log.info("Using rules file path:" + rulesFilePath);
+			handlingType = harvestConfig.getString(HANDLING_TYPE_OVERWRITE,  "harvester", "handlingType");
+			idField = harvestConfig.getString("", "harvester", "idField");
+			if (idField == null) {
+				throw new HarvesterException(
+						"harvester.idField is not defined in the harvest configuration.");
+			}
+			log.debug("idField is:" + idField);
+			idPrefix = harvestConfig.getString("", "harvester",
+					"recordIDPrefix");
+			if (idPrefix == null) {
+				throw new HarvesterException(
+						"harvester.recordIDPrefix is not defined in the harvest configuration.");
+			}
+			mainPayloadId = harvestConfig.getString(DEFAULT_PAYLOAD_ID,
+					"harvester", "payloadId");
+			rulesConfigObject = updateHarvestFile(rulesConfigFile);
+			rulesObject = updateHarvestFile(rulesFile);
 		} catch (MessagingException ex) {
-			log.error("Failed to start connection: {}", ex.getMessage());
+			errorMessage = "Failed to start connection:" + ex.getMessage();
+			log.error(errorMessage);
 			throw new HarvesterException(ex);
+		} catch (Exception e) {
+			log.error(errorMessage);
+			throw new HarvesterException(e);
 		}
+		isReady = true;
+	}
+	
+	@Override
+	public void init(File configFile) throws PluginException {
+		this.configFile = configFile;
+		super.init(configFile);				
 	}
 
 	/**
@@ -131,23 +207,6 @@ public abstract class BaseJsonHarvester extends GenericHarvester {
 	 */
 	public void setStorage(Storage storage) {
 		this.storage = storage;
-	}
-	
-	public void loadConfig() throws HarvesterException {
-		idField = harvestConfig.getString("", "harvester", "idField");
-		if (idField == null) {
-			throw new HarvesterException(
-					"harvester.idField is not defined in the harvest configuration.");
-		}
-		log.debug("idField is:" + idField);
-		idPrefix = harvestConfig.getString("", "harvester",
-				"recordIDPrefix");
-		if (idPrefix == null) {
-			throw new HarvesterException(
-					"harvester.recordIDPrefix is not defined in the harvest configuration.");
-		}
-		mainPayloadId = harvestConfig.getString(DEFAULT_PAYLOAD_ID,
-				"harvester", "payloadId");
 	}
 
 	/**
@@ -160,16 +219,9 @@ public abstract class BaseJsonHarvester extends GenericHarvester {
 	 * @throws HarvesterException
 	 */
 	public List<HarvestItem> harvest(JsonSimple data, String type)
-			throws HarvesterException {
-		try {
-			this.data = data;
-			this.type = type;
-			loadConfig();
-			configObject = updateHarvestFile(configFile);
-			rulesObject = updateHarvestFile(rulesFile);
-		} catch (StorageException e) {
-			throw new HarvesterException(e);
-		}
+			throws HarvesterException {		
+		this.data = data;
+		this.type = type;								
 		return processHarvestList();
 	}
 
@@ -281,15 +333,19 @@ public abstract class BaseJsonHarvester extends GenericHarvester {
 		// create metadata
 		JsonObject meta = new JsonObject();
 		meta.put("dc.identifier", idPrefix + jsonData.getString(null, idField));
-		boolean wasStoredInMainPayload = storeJsonInObject(
+		String handledAs = storeJsonInObject(
 				jsonData.getJsonObject(), meta, oid, getPayloadId(mainPayloadId, oid), idPrefix);
-		item.setShouldBeTransformed(wasStoredInMainPayload);
-		item.setOid(oid);
-		try {
-			setObjectMetadata(oid, jsonData, meta, wasStoredInMainPayload);
+		if (HANDLING_TYPE_OVERWRITE.equalsIgnoreCase(handledAs)) {
+			item.setShouldBeTransformed(true);
+			item.setOid(oid);
+			try {
+				setObjectMetadata(oid, jsonData, meta, handledAs);
+				item.setHarvested(true);
+			} catch (StorageException e) {
+				throw new HarvesterException(e);
+			}
+		} else {
 			item.setHarvested(true);
-		} catch (StorageException e) {
-			throw new HarvesterException(e);
 		}
 	}
 	
@@ -305,7 +361,7 @@ public abstract class BaseJsonHarvester extends GenericHarvester {
 	 * 2. sets file.path to the abs path of the main payload.
 	 *
 	 */	
-	protected void setObjectMetadata(String oid, JsonSimple dataJson, JsonObject meta, boolean wasStoredInMainPayload)
+	protected void setObjectMetadata(String oid, JsonSimple dataJson, JsonObject meta, String handledAs)
 			throws HarvesterException, StorageException {
 		// get the object
 		DigitalObject object = storage.getObject(oid);
@@ -322,19 +378,19 @@ public abstract class BaseJsonHarvester extends GenericHarvester {
 			throw new HarvesterException("Digital object has no metadata.");
 		}
 		
-		if (wasStoredInMainPayload) {
+		if (HANDLING_TYPE_OVERWRITE.equalsIgnoreCase(handledAs)) {
 			props.setProperty("objectId", object.getId());
 			props.setProperty("scriptType",
-					harvestConfig.getString(null, "indexer", "script", "type"));
+					rulesConfig.getString(null, "indexer", "script", "type"));
 			// Set our config and rules data as properties on the object
 			props.setProperty("rulesOid", rulesObject.getId());
 			props.setProperty("rulesPid", rulesObject.getSourceId());
-			props.setProperty("jsonConfigOid", configObject.getId());
-			props.setProperty("jsonConfigPid", configObject.getSourceId());			
+			props.setProperty("jsonConfigOid", rulesConfigObject.getId());
+			props.setProperty("jsonConfigPid", rulesConfigObject.getSourceId());
 			
-			setCustomObjectMetadata(oid, object, props, dataJson, wasStoredInMainPayload);
+			setCustomObjectMetadata(oid, object, props, dataJson, handledAs);
 
-			JsonObject params = harvestConfig.getObject("indexer", "params");
+			JsonObject params = rulesConfig.getObject("indexer", "params");
 			for (Object key : params.keySet()) {
 				props.setProperty(key.toString(), params.get(key).toString());
 			}
@@ -352,9 +408,9 @@ public abstract class BaseJsonHarvester extends GenericHarvester {
 	 * @param object
 	 * @param metadata
 	 * @param dataJson
-	 * @param wasStoredInMainPayload
+	 * @param handledAs
 	 */
-	protected void setCustomObjectMetadata(String oid, DigitalObject object, Properties metadata, JsonSimple dataJson, boolean wasStoredInMainPayload) throws HarvesterException {
+	protected void setCustomObjectMetadata(String oid, DigitalObject object, Properties metadata, JsonSimple dataJson, String handledAs) throws HarvesterException {
 		
 	}
 
@@ -392,47 +448,59 @@ public abstract class BaseJsonHarvester extends GenericHarvester {
 		return false;
 	}
 
-	protected boolean storeJsonInObject(JsonObject dataJson,
+	protected String storeJsonInObject(JsonObject dataJson,
 			JsonObject metaJson, String oid, String payloadId, String idPrefix)
 			throws HarvesterException {
 		// Does the object already exist?
 		DigitalObject object = null;
-		boolean wasStoredInMainPayload = true;
+		String handledAs = null;
+		String renderPending = "true";
+		log.debug("Current handling type is:" + handlingType);
 		try {
 			object = storage.getObject(oid);
 			// no exception thrown, object exists, determine if we should
-			// overwrite...
-			if (shouldPark) {
-				wasStoredInMainPayload = false;
-				String parkedPayloadId = "parked-" + payloadId;
+			// overwrite...			
+			if (HANDLING_TYPE_PARK.equalsIgnoreCase(handlingType)) {
+				log.debug("Parking incoming JSON.");
+				handledAs = HANDLING_TYPE_PARK;
+				String parkedPayloadId = payloadId + ".parked";
 				storeJsonInPayload(dataJson, metaJson, object, parkedPayloadId,
 						idPrefix);
+				renderPending = "false";
 			} else {
-				// merge it, overwriting similar fields...
-				storeJsonInPayload(dataJson, metaJson, object, payloadId,
-						idPrefix);
+				log.debug("Overwriting with incoming JSON.");
+				if (HANDLING_TYPE_OVERWRITE.equalsIgnoreCase(handlingType)) {
+					// merge it, overwriting similar fields...
+					storeJsonInPayload(dataJson, metaJson, object, payloadId,
+							idPrefix);
+				} else {
+					handledAs = HANDLING_TYPE_IGNORE_IF_EXISTS;
+					renderPending = "false";
+				}
 			}
 		} catch (StorageException ex) {
 			// @TODO: Programming by exception, find a better way, perhaps add
 			// storage.objectExists()?
-			// This is going to be brand new
+			// This is going to be brand new object
+			log.debug("Brand new Object created with incoming JSON.");
 			try {
 				object = StorageUtils.getDigitalObject(storage, oid);
 				storeJsonInPayload(dataJson, metaJson, object, payloadId,
 						idPrefix);
+				handledAs = HANDLING_TYPE_OVERWRITE;
 			} catch (StorageException ex2) {
 				throw new HarvesterException(
 						"Error creating new digital object: ", ex2);
 			}
 		}				
 		try {
-			object.getMetadata().setProperty("render-pending", "true");
+			object.getMetadata().setProperty("render-pending", renderPending);
 			object.close();
 		} catch (StorageException e) {
 			throw new HarvesterException(
 					"Error closing digital object: ", e);
 		}
-		return wasStoredInMainPayload;
+		return handledAs;
 	}
 	
 	
@@ -612,5 +680,33 @@ public abstract class BaseJsonHarvester extends GenericHarvester {
 
 	public void setConfigFile(File configFile) {
 		this.configFile = configFile;
+	}
+
+	public boolean isReady() {
+		return isReady;
+	}
+
+	public void setReady(boolean isReady) {
+		this.isReady = isReady;
+	}
+
+	public String getErrorMessage() {
+		return errorMessage;
+	}
+
+	public void setErrorMessage(String errorMessage) {
+		this.errorMessage = errorMessage;
+	}
+
+	public JsonSimple getRulesConfig() {
+		return rulesConfig;
+	}
+
+	public void setRulesConfig(JsonSimple rulesConfig) {
+		this.rulesConfig = rulesConfig;
+	}
+	
+	public boolean getCommit() {
+		return harvestConfig.getBoolean(false, "harvester", "commit");
 	}
 }
