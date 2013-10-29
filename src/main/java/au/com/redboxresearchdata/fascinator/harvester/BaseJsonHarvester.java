@@ -21,6 +21,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -28,6 +29,7 @@ import java.util.Properties;
 import java.util.Set;
 
 import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.json.simple.JSONArray;
@@ -54,9 +56,40 @@ import com.googlecode.fascinator.common.storage.impl.GenericPayload;
 /**
  * Basic class that harvests JSON documents.
  * 
- * The basic JSON Structure should be:
+ * A typical dataset JSON Structure should be:
  * 
- * { "type":"DocumentType", "data":JSON object/array to harvest. }
+  { "type":"DocumentType", 
+   	"data": {
+   		"data":[
+	   		{
+	   			"<id-field>":"<id>",
+	   			"owner":"owner",
+	   			"attachmentList" : ["tfpackage", "workflow.metadata"],
+		        "customProperties" : ["file.path"],
+		        "varMap" : {
+		            "file.path" : "${fascinator.home}/packages/<oid>.tfpackage"            
+		        },
+		        "attachmentDestination" : {
+		            "tfpackage":["<oid>.tfpackage","metadata.json","$file.path"], 
+		            "workflow.metadata":["workflow.metadata"]
+		        },
+		        "workflow.metadata" : {
+		            "id":"dataset",
+		            "step":"metadata-review",
+		            "pageTitle":"Metadata Record",
+		            "label":"Metadata Review",
+		            "formData" : {
+		                "title" : "",
+		                "description": ""
+		            }                    
+		        },
+		        "tfpackage": {
+		        	... contents of tfpackage ...
+		 		}
+ *  	]
+ *  }
+ * 
+ * }
  * 
  * Sub-classes classes need to perform document validation.
  * 
@@ -74,7 +107,7 @@ public abstract class BaseJsonHarvester extends GenericHarvester {
 						       HANDLING_TYPE_IGNORE_IF_EXISTS = "ignore_if_exists";
 
 	/** Default payload ID */
-	protected static final String DEFAULT_PAYLOAD_ID = "metadata.json";
+	protected static final String DEFAULT_PAYLOAD_ID = "harvestClient.json";
 
 	protected String id, name, type;
 
@@ -127,7 +160,7 @@ public abstract class BaseJsonHarvester extends GenericHarvester {
 	
 	/** Error message */
 	protected String errorMessage;
-
+		
 	public BaseJsonHarvester(String id, String name) {
 		super(id, name);		
 	}
@@ -179,9 +212,9 @@ public abstract class BaseJsonHarvester extends GenericHarvester {
 						"harvester.recordIDPrefix is not defined in the harvest configuration.");
 			}
 			mainPayloadId = harvestConfig.getString(DEFAULT_PAYLOAD_ID,
-					"harvester", "payloadId");
+					"harvester", "mainPayloadId");
 			rulesConfigObject = updateHarvestFile(rulesConfigFile);
-			rulesObject = updateHarvestFile(rulesFile);
+			rulesObject = updateHarvestFile(rulesFile);			
 		} catch (MessagingException ex) {
 			errorMessage = "Failed to start connection:" + ex.getMessage();
 			log.error(errorMessage);
@@ -334,18 +367,18 @@ public abstract class BaseJsonHarvester extends GenericHarvester {
 		JsonObject meta = new JsonObject();
 		meta.put("dc.identifier", idPrefix + jsonData.getString(null, idField));
 		String handledAs = storeJsonInObject(
-				jsonData.getJsonObject(), meta, oid, getPayloadId(mainPayloadId, oid), idPrefix);
+				jsonData, meta, oid, getPayloadId(mainPayloadId, oid), idPrefix);
 		if (HANDLING_TYPE_OVERWRITE.equalsIgnoreCase(handledAs)) {
 			item.setShouldBeTransformed(true);
-			item.setOid(oid);
-			try {
-				setObjectMetadata(oid, jsonData, meta, handledAs);
-				item.setHarvested(true);
-			} catch (StorageException e) {
-				throw new HarvesterException(e);
-			}
+			item.setOid(oid);							
+			item.setHarvested(true);
 		} else {
 			item.setHarvested(true);
+		}		
+		try {
+			setObjectMetadata(oid, jsonData, meta, handledAs);
+		} catch (StorageException e) {
+			throw new HarvesterException(e);
 		}
 	}
 	
@@ -387,8 +420,6 @@ public abstract class BaseJsonHarvester extends GenericHarvester {
 			props.setProperty("rulesPid", rulesObject.getSourceId());
 			props.setProperty("jsonConfigOid", rulesConfigObject.getId());
 			props.setProperty("jsonConfigPid", rulesConfigObject.getSourceId());
-			
-			setCustomObjectMetadata(oid, object, props, dataJson, handledAs);
 
 			JsonObject params = rulesConfig.getObject("indexer", "params");
 			for (Object key : params.keySet()) {
@@ -397,7 +428,7 @@ public abstract class BaseJsonHarvester extends GenericHarvester {
 		} else {
 			props.setProperty("parked", "true");
 		}
-
+		saveCustomObjectMetadata(oid, object, props, dataJson, handledAs);
 		// done with the object
 		object.close();
 	}
@@ -410,7 +441,7 @@ public abstract class BaseJsonHarvester extends GenericHarvester {
 	 * @param dataJson
 	 * @param handledAs
 	 */
-	protected void setCustomObjectMetadata(String oid, DigitalObject object, Properties metadata, JsonSimple dataJson, String handledAs) throws HarvesterException {
+	protected void saveCustomObjectMetadata(String oid, DigitalObject object, Properties metadata, JsonSimple dataJson, String handledAs) throws HarvesterException {
 		
 	}
 
@@ -447,8 +478,74 @@ public abstract class BaseJsonHarvester extends GenericHarvester {
 	public boolean hasMoreDeletedObjects() {
 		return false;
 	}
+	
+	protected void addAttachments(String oid, DigitalObject object, JsonSimple jsonData, String handledAs) throws HarvesterException {		
+		// creating attachments...
+		JSONArray attachmentListArray = jsonData.getArray("attachmentList");
+		if (attachmentListArray != null) {
+			for (Object attachmentDataObj : attachmentListArray) {
+				String attachmentDataName = attachmentDataObj.toString();
+				JsonObject attachmentData = jsonData.getObject(attachmentDataName);
+				JSONArray destinationFileNameArray = jsonData.getArray("attachmentDestination", attachmentDataName);
+				log.debug("attachmentData:");
+				log.debug(new JsonSimple(attachmentData).toString(true));
+				for (Object destinationFileName : destinationFileNameArray) {
+					addAttachment(oid, object, destinationFileName.toString(), attachmentData, handledAs, jsonData);
+				}
+			}
+		} else {
+			log.debug("No attachmentList specified.");
+		}
+	}
+	
+	/** 
+	 * Attach JSON payloads to the object, replaces <oid> references, resolves the variable maps.
+	 * 
+	 * @param oid
+	 * @param object
+	 * @param filename
+	 * @param contents
+	 * @param handledAs
+	 * @throws HarvesterException
+	 */
+	protected void addAttachment(String oid, DigitalObject object, String filename, JsonObject contents, String handledAs, JsonSimple jsonData) throws HarvesterException {
+		try {
+			if (HANDLING_TYPE_PARK.equalsIgnoreCase(handledAs)) {
+				filename = filename + ".parked";
+			}
+			filename = filename.replace("<oid>", oid);
+			if (filename.startsWith("$")) {
+				String varfilename = getVar(jsonData, filename, oid);				
+				if (varfilename == null) { 	
+					log.debug("addAttachment::Invalid variable substitution, ignoring:" + filename);
+				} else {
+					// add a copy of the attachment...
+					FileUtils.writeStringToFile(new File(varfilename), new JsonSimple(contents).toString(true), "UTF-8");
+				} 				
+			} else {
+				// an attachment
+				for (String pid : object.getPayloadIdList() ) {
+					if (pid.equalsIgnoreCase(filename)) {
+						object.updatePayload(filename, IOUtils.toInputStream(new JsonSimple(contents).toString(true), "UTF-8"));
+						return;
+					}
+				}
+				object.createStoredPayload(filename, IOUtils.toInputStream(new JsonSimple(contents).toString(true), "UTF-8"));
+			}						
+		} catch (Exception e) {
+			throw new HarvesterException(e);
+		}
+	}
+	
+	protected String getVar(JsonSimple jsonData, String varName, String oid) {
+		String val = jsonData.getString(null, "varMap", varName.replace("$", ""));
+		if (val != null) {
+			val = val.replace("<oid>", oid);
+		}
+		return val;
+	}
 
-	protected String storeJsonInObject(JsonObject dataJson,
+	protected String storeJsonInObject(JsonSimple dataJson,
 			JsonObject metaJson, String oid, String payloadId, String idPrefix)
 			throws HarvesterException {
 		// Does the object already exist?
@@ -464,14 +561,14 @@ public abstract class BaseJsonHarvester extends GenericHarvester {
 				log.debug("Parking incoming JSON.");
 				handledAs = HANDLING_TYPE_PARK;
 				String parkedPayloadId = payloadId + ".parked";
-				storeJsonInPayload(dataJson, metaJson, object, parkedPayloadId,
+				storeJsonInPayload(dataJson.getJsonObject(), metaJson, object, parkedPayloadId,
 						idPrefix);
 				renderPending = "false";
 			} else {
 				log.debug("Overwriting with incoming JSON.");
 				if (HANDLING_TYPE_OVERWRITE.equalsIgnoreCase(handlingType)) {
 					// merge it, overwriting similar fields...
-					storeJsonInPayload(dataJson, metaJson, object, payloadId,
+					storeJsonInPayload(dataJson.getJsonObject(), metaJson, object, payloadId,
 							idPrefix);
 				} else {
 					handledAs = HANDLING_TYPE_IGNORE_IF_EXISTS;
@@ -485,7 +582,7 @@ public abstract class BaseJsonHarvester extends GenericHarvester {
 			log.debug("Brand new Object created with incoming JSON.");
 			try {
 				object = StorageUtils.getDigitalObject(storage, oid);
-				storeJsonInPayload(dataJson, metaJson, object, payloadId,
+				storeJsonInPayload(dataJson.getJsonObject(), metaJson, object, payloadId,
 						idPrefix);
 				handledAs = HANDLING_TYPE_OVERWRITE;
 			} catch (StorageException ex2) {
@@ -494,6 +591,7 @@ public abstract class BaseJsonHarvester extends GenericHarvester {
 			}
 		}				
 		try {
+			addAttachments(oid, object, dataJson, handledAs);
 			object.getMetadata().setProperty("render-pending", renderPending);
 			object.close();
 		} catch (StorageException e) {
