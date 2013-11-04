@@ -90,6 +90,18 @@ public class JsonHarvestQueueConsumer implements GenericListener, JsonHarvestQue
     
     /** Render queue string */
     private String QUEUE_ID;
+    
+    /** Harvest Event topic */
+    private String EVENT_TOPIC_ID;
+    
+    /** The item was harvested */
+    private static final String EVENT_PROCESS_HARVESTED = "proc_harvested";
+    
+    /** The item failed validation */
+    private static final String EVENT_PROCESS_INVALID = "proc_invalid";
+    
+    /** The item failed to be processed */
+    private static final String EVENT_PROCESS_FAIL = "proc_fail";
 
     /** Logging */
     private static Logger log = LoggerFactory.getLogger(JsonHarvestQueueConsumer.class);
@@ -166,11 +178,11 @@ public class JsonHarvestQueueConsumer implements GenericListener, JsonHarvestQue
 
             session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
 
-            consumer = session.createConsumer(session.createQueue(QUEUE_ID));
+            consumer = session.createConsumer(session.createQueue(QUEUE_ID));            
             consumer.setMessageListener(this);
-
-            producer = session.createProducer(null);
-            producer.setDeliveryMode(DeliveryMode.PERSISTENT);
+                                    
+            producer = session.createProducer(session.createTopic(EVENT_TOPIC_ID));
+            producer.setDeliveryMode(DeliveryMode.PERSISTENT);            
 
             connection.start();
             
@@ -325,12 +337,16 @@ public class JsonHarvestQueueConsumer implements GenericListener, JsonHarvestQue
 		log.debug("Number of Objects in list:" + harvester.getItemList().size());
 		log.debug("Number of Objects in harvest list:" + harvestList.size());
 		log.debug("Number of Objects successfully harvested:" + harvester.getSuccessOidList().size());
+		List<JsonObject> eventJsonList = new ArrayList<JsonObject>();
 		for (HarvestItem item : harvestList) {
 			if (item.isShouldBeTransformed()) {
 				String oid = item.getOid();
 				// @TODO: determine if parking and ignoring should be in the audit log / object history.
 				transformObject(oid, harvester.getCommit(), harvester.getRulesConfig());
 				log.info("JSON Object on the toolchain, oid:" + oid);
+			} 
+			if (item.isHarvested()) {
+				eventJsonList.add(createEventJson(item, EVENT_PROCESS_HARVESTED));				
 			}
 		}
 		// check if there are any failed items...
@@ -353,15 +369,38 @@ public class JsonHarvestQueueConsumer implements GenericListener, JsonHarvestQue
 					if (!item.isValid()) {
 						// failed validation...
 						log.error("Failed validation:" + failedJson.toString(true));
+						eventJsonList.add(createEventJson(item, EVENT_PROCESS_INVALID));
 					}
 					if (item.isValid() && !item.isHarvested()) {
 						// exception thrown while harvesting...
 						log.error("Failed harvest:" + failedJson.toString(true));
+						eventJsonList.add(createEventJson(item, EVENT_PROCESS_FAIL));
 					}
 				}
 			}
 			log.error(getFailedJsonList());
 		}
+		// emit the standard harvest events...
+		for (JsonObject eventJson : eventJsonList) {
+			emitHarvestEvent(eventJson);
+		}
+	}
+	/**
+	 * Creates a event JSON.
+	 * 
+	 * @param item
+	 * @param eventName
+	 * @return
+	 */
+	public JsonObject createEventJson(HarvestItem item, String eventName) {
+		JsonObject eventJson = new JsonObject();
+		eventJson.put("hid", item.getHid());
+		eventJson.put("oid", item.getOid());
+		eventJson.put("valid", Boolean.toString(item.isValid()));
+		eventJson.put("transformed", Boolean.toString(item.isShouldBeTransformed()));
+		eventJson.put("harvested", Boolean.toString(item.isHarvested()));
+		eventJson.put("event", eventName);
+		return eventJson;
 	}
 	
     /**
@@ -404,6 +443,21 @@ public class JsonHarvestQueueConsumer implements GenericListener, JsonHarvestQue
     }
     
     /**
+     * To send events on the harvest topic
+     * 
+     * @param oid Object id
+     * @param jsonFile Configuration file
+     * @param commit To commit each request to Queue (true) or not (false)
+     * @param queueName Name of the queue to route to
+     * @throws MessagingException if the message could not be sent
+     */
+    public void emitHarvestEvent(JsonObject json) throws MessagingException {        
+		log.info("Sending harvest event:");
+		log.info(json.toString());
+		messaging.topicMessage(EVENT_TOPIC_ID, json.toString());
+    }
+    
+    /**
      * To put events to subscriber queue
      * 
      * @param oid Object id
@@ -428,6 +482,7 @@ public class JsonHarvestQueueConsumer implements GenericListener, JsonHarvestQue
 		this.config = config;
 		name = config.getString(null, "config", "name");
         QUEUE_ID = name;
+        EVENT_TOPIC_ID = QUEUE_ID + "_event";
         thread.setName(name);
         File sysFile = null;
 

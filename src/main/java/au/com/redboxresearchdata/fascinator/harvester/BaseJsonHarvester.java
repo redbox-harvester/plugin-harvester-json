@@ -93,6 +93,7 @@ public abstract class BaseJsonHarvester extends GenericHarvester {
 						  	   HANDLING_TYPE_PARK = "park",
 						       HANDLING_TYPE_IGNORE_IF_EXISTS = "ignore_if_exists";
 	
+	/** Commands */
 	public static final String COMMAND_DELETE = "delete",
 							   COMMAND_HARVEST = "harvest",
 							   COMMAND_ATTACH = "attach";
@@ -304,6 +305,11 @@ public abstract class BaseJsonHarvester extends GenericHarvester {
 		}
 	}
 
+	/**
+	 * Validates the JSON document before adding to the harvest list.
+	 * 
+	 * @param jsonObj
+	 */
 	protected void addToHarvestList(JsonSimple jsonObj) {
 		HarvestItem item = new HarvestItem("", jsonObj, false, true, false);
 		item.setHid(getHarvestId(jsonObj));
@@ -388,10 +394,8 @@ public abstract class BaseJsonHarvester extends GenericHarvester {
 		if (HANDLING_TYPE_OVERWRITE.equalsIgnoreCase(handledAs)) {
 			item.setShouldBeTransformed(true);
 			item.setOid(oid);							
-			item.setHarvested(true);
-		} else {
-			item.setHarvested(true);
-		}		
+		} 
+		item.setHarvested(true);
 		try {
 			setObjectMetadata(oid, jsonData, meta, handledAs);
 		} catch (StorageException e) {

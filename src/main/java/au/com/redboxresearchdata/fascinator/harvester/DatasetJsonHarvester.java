@@ -52,6 +52,22 @@ public class DatasetJsonHarvester extends GenericJsonHarvester {
 		super("DatasetJson", "Dataset JSON Harvester");
 	}
 	
+	/**
+	 *  Ensures that JSON documents also have either an attachmentList or a command
+	 */
+	@Override
+	protected boolean isValidJson(JsonSimple json) {		
+		boolean isValid = super.isValidJson(json);
+		if (isValid) {
+			String command = json.getString(null, "command");
+			if (command == null) {
+				JSONArray attachmentList = json.getArray("attachmentList");
+				isValid = attachmentList != null;
+			}
+		}
+		return isValid;
+	}
+	
 	@Override
 	protected void saveCustomObjectMetadata(String oid, DigitalObject object, Properties metadata, JsonSimple dataJson, String handledAs) throws HarvesterException {
 		super.saveCustomObjectMetadata(oid, object, metadata, dataJson, handledAs);
