@@ -73,8 +73,8 @@ import com.googlecode.fascinator.common.messaging.MessagingServices;
  * 1. Load up the harvesters.
  * 2. Wait for incoming JSON.
  * 3. Determine if incoming JSON has type.
- * 4. Harvest the JSON document.
- * 5. Determine if there are any failed items, putting these into the "failed" map, which can be inspected and reharvested through JMX.
+ * 4. Process the JSON document.
+ * 5. Determine if there are any failed items, putting these into the "failed" map, which can be inspected and reprocessed through JMX.
  *  
  * 
  * @author Shilo Banihit
@@ -468,6 +468,7 @@ public class JsonHarvestQueueConsumer implements GenericListener, JsonHarvestQue
 				if (hv instanceof BaseJsonHarvester) {
 					BaseJsonHarvester harvester = (BaseJsonHarvester) hv;
 					harvester.setStorage(storage);
+					harvester.setIndexer(indexer);
 					String configFilePath = globalConfig.getString(null, "portal", "harvestFiles") + "/" + type + ".json";
 					File harvestConfigFile = new File(configFilePath);
 					if (!harvestConfigFile.exists()) {
