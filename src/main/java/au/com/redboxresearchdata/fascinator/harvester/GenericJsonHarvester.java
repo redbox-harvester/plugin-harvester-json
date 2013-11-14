@@ -25,6 +25,7 @@ import java.util.Properties;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
+import org.json.simple.JSONArray;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -107,23 +108,21 @@ public class GenericJsonHarvester extends BaseJsonHarvester {
 	}
 		
 	/**
-	 * Sets render-pending, owner and an optionally copies the main payload to the "payloadBase" directory. 
+	 * Sets render-pending, owner and saves custom object metadata properties. 
 	 * 
 	 */
 	@Override
-	protected void setCustomObjectMetadata(String oid, DigitalObject object, Properties metadata, JsonSimple dataJson, String handledAs) throws HarvesterException {
+	protected void saveCustomObjectMetadata(String oid, DigitalObject object, Properties metadata, JsonSimple dataJson, String handledAs) throws HarvesterException {
 		if (HANDLING_TYPE_OVERWRITE.equalsIgnoreCase(handledAs)) {
 			metadata.setProperty("render-pending", "true");
 			metadata.setProperty("owner", dataJson.getString(harvestConfig.getString("guest",  "default-owner"), "owner")); // permissive
-			String payloadBase = harvestConfig.getString(null, "harvester", "payloadBase");
-			if (payloadBase != null) {
-				payloadBase = FilenameUtils.separatorsToUnix(payloadBase);
-				String mainPayloadPath = payloadBase + getPayloadId(mainPayloadId, oid);				
-				metadata.setProperty(harvestConfig.getString("file.path", "harvester", "payloadMetaKey"), mainPayloadPath);
-				try {
-					FileUtils.writeStringToFile(new File(mainPayloadPath), dataJson.toString(true), "UTF-8");
-				} catch (IOException e) {
-					throw new HarvesterException("Failed to write to payload file:" + mainPayloadPath, e);
+			JSONArray customPropArray = dataJson.getArray(null, "customProperties");
+			if (customPropArray != null) {
+				for (Object customPropObj : customPropArray) {
+					String customPropVal = getVar(dataJson, customPropObj.toString(), oid);
+					if (customPropVal != null) {
+						metadata.setProperty(customPropObj.toString(), customPropVal);
+					}
 				}
 			}
 		}

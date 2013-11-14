@@ -22,6 +22,10 @@ import java.io.IOException;
 import java.util.Properties;
 
 import org.apache.commons.io.IOUtils;
+import org.json.simple.JSONArray;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationContext;
 
 import com.googlecode.fascinator.api.harvester.HarvesterException;
 import com.googlecode.fascinator.api.storage.DigitalObject;
@@ -29,38 +33,64 @@ import com.googlecode.fascinator.api.storage.Payload;
 import com.googlecode.fascinator.api.storage.StorageException;
 import com.googlecode.fascinator.common.JsonObject;
 import com.googlecode.fascinator.common.JsonSimple;
+import com.googlecode.fascinator.spring.ApplicationContextProvider;
+import com.googlecode.fascinator.transformer.basicVersioning.ExtensionBasicVersioningTransformer;
 
 /**
  * 
  * 	Harvests incoming JSON documents into Dataset records.
  * 
- *   
  * 
  * @author Shilo Banihit
  *
  */
 public class DatasetJsonHarvester extends GenericJsonHarvester {
+	private static Logger log = LoggerFactory
+			.getLogger(DatasetJsonHarvester.class);
+	
 	public DatasetJsonHarvester() {
 		super("DatasetJson", "Dataset JSON Harvester");
 	}
 	
-	protected void setCustomObjectMetadata(String oid, DigitalObject object, Properties metadata, JsonSimple dataJson, String handledAs) throws HarvesterException {
-		super.setCustomObjectMetadata(oid, object, metadata, dataJson, handledAs);
-		if (HANDLING_TYPE_OVERWRITE.equalsIgnoreCase(handledAs)) {
-			// create the workflow.metadata file
-			JsonSimple workflowmeta = new JsonSimple();
-			workflowmeta.getJsonObject().put("id", dataJson.getString("dataset", "workflowId"));
-			workflowmeta.getJsonObject().put("step", dataJson.getString("investigation", "workflowStep"));
-			workflowmeta.getJsonObject().put("pageTitle", dataJson.getString("Metadata Record", "workflowPageTitle") );
-			workflowmeta.getJsonObject().put("label", dataJson.getString("Investigation", "workflowLabel") );
-			JsonObject formData = workflowmeta.writeObject("formData");
-			formData.put("title", dataJson.getString("", "title"));
-			formData.put("description", dataJson.getString("", "description"));
+	/**
+	 *  Ensures that JSON documents also have either an attachmentList or a command
+	 */
+	@Override
+	protected boolean isValidJson(JsonSimple json) {		
+		boolean isValid = super.isValidJson(json);
+		if (isValid) {
+			String command = json.getString(null, "command");
+			if (command == null) {
+				JSONArray attachmentList = json.getArray("attachmentList");
+				isValid = attachmentList != null;
+			}
+		}
+		return isValid;
+	}
+	
+	@Override
+	protected void saveCustomObjectMetadata(String oid, DigitalObject object, Properties metadata, JsonSimple dataJson, String handledAs) throws HarvesterException {
+		super.saveCustomObjectMetadata(oid, object, metadata, dataJson, handledAs);
+		log.debug("Dataset harvester, handling as:" + handledAs);
+		if (HANDLING_TYPE_PARK.equalsIgnoreCase(handledAs)) {
+			log.debug("Creating a version for the parked data...");
+			// since we don't want to put the object on the toolchain, we trigger the transformer to version to parked payload			
 			try {
-				object.createStoredPayload("workflow.metadata", IOUtils.toInputStream(workflowmeta.toString(true), "UTF-8"));				
+				ApplicationContext context = ApplicationContextProvider.getApplicationContext();
+				if (context != null) {
+					ExtensionBasicVersioningTransformer versioningTransformer = (ExtensionBasicVersioningTransformer) context.getBean("extensionBasicVersioningTransformer", ExtensionBasicVersioningTransformer.class);
+					if (versioningTransformer != null) {
+						versioningTransformer.transform(object);
+					} else {
+						log.error("Cannot get instance of versioning transformer");
+					}
+				} else {
+					log.error("No context available.");
+				}
 			} catch (Exception e) {
 				throw new HarvesterException(e);
 			}
+			log.debug("Done, creating a version for the parked data...");
 		}
 	}
 }
