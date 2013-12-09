@@ -43,8 +43,7 @@ import com.googlecode.fascinator.common.JsonSimple;
  * This class is provided simply to bootstrap a trivial JSON harvester set up,
  * and is not intended to replace a type-specific set up where harvesting of several types are supported. 
  * Also, validation should occur at type-specific harvesters and NOT at the rules file.  Among others, a type-specific harvester validation ensures proper monitoring and administration.
- * 
- * This class also checks the harvest config property "payloadBase", and if present, copies the main payload to the payload base directory and stores the abs path in value specified in "payloadMetaKey" config property.  
+ *   
  * 
  * @author Shilo Banihit
  *

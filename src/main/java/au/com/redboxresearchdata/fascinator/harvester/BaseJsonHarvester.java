@@ -55,7 +55,7 @@ import com.googlecode.fascinator.common.storage.StorageUtils;
   { "type":"DocumentType", 
    	"data": {
    		"data":[
-	   		{
+	   		 {
 	   			"<id-field>":"<id>",
 	   			"owner":"owner",
 	   			"attachmentList" : ["attachment1data", "attachment2data"],
@@ -73,6 +73,24 @@ import com.googlecode.fascinator.common.storage.StorageUtils;
 		        "attachment1data": {
 		        	... contents of attachment1...
 		 		}
+	 		}, 
+	 		{
+	            "<id-field>":"<id>",
+	            "owner":"owner",
+	            "command":"delete"                        
+        	},
+        	{
+	          "<id-field>":"<id>",
+	          "owner":"owner",
+	          "command":"attach",
+	          "attachmentList" : ["attachment1"],
+	          "attachmentDestination" : {               
+	              "attachment1":["attachment1.filename"]
+	          },
+	          "attachment1" : {
+	              ... contents of attachment1 ....
+	          }                    
+	        }
  *  	]
  *  }
  * 
