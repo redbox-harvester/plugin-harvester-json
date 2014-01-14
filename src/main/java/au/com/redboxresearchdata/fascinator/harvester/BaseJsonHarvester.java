@@ -25,6 +25,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
 import java.util.Set;
+import java.util.UUID;
 
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.FileUtils;
@@ -136,10 +137,16 @@ public abstract class BaseJsonHarvester extends GenericHarvester {
 	 **/
 	protected List<HarvestItem> harvestList;
 
+	/**
+	 * List of successfully harvested objects, cleared as soon as a new harvest is requested.
+	 */
 	protected List<String> successOidList;
 
-	/** The entire harvest list */
+	/** The entire harvest list, cleared as soon as a new harvest is requested */
 	protected List<HarvestItem> itemList;
+	
+	/** The identifier of the harvest request, cleared as soon as a new harvest is requested. */
+	protected String harvestRequestId;
 
 	/** Messaging services */
 	protected MessagingServices messaging;
@@ -264,10 +271,11 @@ public abstract class BaseJsonHarvester extends GenericHarvester {
 	 * @return List of Object Ids.
 	 * @throws HarvesterException
 	 */
-	public List<HarvestItem> harvest(JsonSimple data, String type)
+	public List<HarvestItem> harvest(JsonSimple data, String type, String requestId)
 			throws HarvesterException {		
 		this.data = data;
-		this.type = type;								
+		this.type = type;
+		this.harvestRequestId = requestId;
 		return processHarvestList();
 	}
 
@@ -314,11 +322,11 @@ public abstract class BaseJsonHarvester extends GenericHarvester {
 			log.debug("Data is not an array.");
 			JsonSimple jsonObj = new JsonSimple(data.getObject("data"));
 			log.debug("Data is: " + jsonObj.toString(true));
-			addToHarvestList(jsonObj);
+			addToHarvestList(jsonObj, harvestRequestId);
 		} else {
 			log.debug("Data is an array");
 			for (JsonSimple jsonObj : JsonSimple.toJavaList(dataArray)) {
-				addToHarvestList(jsonObj);
+				addToHarvestList(jsonObj, harvestRequestId);
 			}
 		}
 	}
@@ -328,9 +336,10 @@ public abstract class BaseJsonHarvester extends GenericHarvester {
 	 * 
 	 * @param jsonObj
 	 */
-	protected void addToHarvestList(JsonSimple jsonObj) {
+	protected void addToHarvestList(JsonSimple jsonObj, String harvestRequestId) {
 		HarvestItem item = new HarvestItem("", jsonObj, false, true, false);
-		item.setHid(getHarvestId(jsonObj));
+		item.setHid(getHarvestItemId(jsonObj));
+		item.setHrid(harvestRequestId);
 		itemList.add(item);
 		// validation is deferred to sub-classes
 		if (isValidJson(jsonObj)) {
@@ -341,7 +350,7 @@ public abstract class BaseJsonHarvester extends GenericHarvester {
 	}
 
 	/**
-	 * Generic implementation is a combination of type, id prefix and the id
+	 * Generic implementation is an MD5 hash of the type, id prefix and the id
 	 * field, in that order.
 	 * 
 	 * @param jsonData
@@ -353,15 +362,14 @@ public abstract class BaseJsonHarvester extends GenericHarvester {
 	}
 
 	/**
-	 * Generic implementation is a combination of type, the entire json.
+	 * Generic implementation is a type 4 UUID String
 	 * 
 	 * @param jsonData
 	 * @return Object ID string
 	 */
-	protected String getHarvestId(JsonSimple jsonData) {
-		return DigestUtils.md5Hex(type + ":" + jsonData.toString() + ":"
-				+ System.currentTimeMillis());
-	}
+	protected String getHarvestItemId(JsonSimple jsonData) {
+		return UUID.randomUUID().toString();
+	}	
 
 	/**
 	 * Performs validation of JSON.
@@ -408,10 +416,11 @@ public abstract class BaseJsonHarvester extends GenericHarvester {
 		JsonObject meta = new JsonObject();
 		meta.put("dc.identifier", idPrefix + jsonData.getString(null, idField));
 		String handledAs = storeJsonInObject(
-				jsonData, meta, oid, getPayloadId(mainPayloadId, oid), idPrefix);		
+				jsonData, meta, oid, getPayloadId(mainPayloadId, oid), idPrefix);
+		item.setOid(oid);
+		item.setHandledAs(handledAs);
 		if (HANDLING_TYPE_OVERWRITE.equalsIgnoreCase(handledAs)) {
-			item.setShouldBeTransformed(true);
-			item.setOid(oid);							
+			item.setShouldBeTransformed(true);									
 		} 
 		item.setHarvested(true);
 		try {

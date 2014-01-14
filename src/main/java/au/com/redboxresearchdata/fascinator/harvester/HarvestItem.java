@@ -29,8 +29,11 @@ import java.beans.ConstructorProperties;
  */
 public class HarvestItem {
 
-	/** The harvest request id */
+	/** The harvest item id*/
 	protected String hid;
+	
+	/** The harvest request id */
+	protected String hrid;
 	/** 
 	 * OID of the item, empty if not processed by harvester.
 	 */
@@ -55,6 +58,8 @@ public class HarvestItem {
 	 * If this has been successfully harvested.
 	 */
 	private boolean harvested;
+	
+	private String handledAs;
 	
 	@ConstructorProperties({"oid", "data", "shouldBeTransformed", "valid", "harvested"})
 	public HarvestItem(String oid, Object data, boolean shouldBeTransformed, boolean valid, boolean harvested) {
@@ -111,5 +116,21 @@ public class HarvestItem {
 
 	public void setHid(String hid) {
 		this.hid = hid;
+	}
+
+	public String getHrid() {
+		return hrid;
+	}
+
+	public void setHrid(String hrid) {
+		this.hrid = hrid;
+	}
+
+	public String getHandledAs() {
+		return handledAs;
+	}
+
+	public void setHandledAs(String handledAs) {
+		this.handledAs = handledAs;
 	}
 }

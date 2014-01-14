@@ -28,44 +28,42 @@ public interface JsonHarvestQueueMXBean {
 	public void harvestJsonText(String text);
 	
 	/**
-	 * Return a json array of failed harvest ids.
+	 * Return a json array of failed harvest item ids.
 	 * 
 	 */
-	public String getFailedJsonList();
+	public String getFailedItemIds();
 	
 	/**
 	 * Return the json text of the harvest id.
 	 * 
 	 */
-	public String getFailedJsonText(String harvestId);
+	public String getFailedItemText(String itemId);
 	
 	/**
 	 * Sets the json text of the harvest id.
 	 * 
 	 */
-	public void setFailedJsonText(String harvestId, String json);
-
-	/**
-	 * Attempts a reharvest of the specified harvest id. 
-	 */
-	public void reharvestFailedJson(String harvestId);
-	
+	public void setFailedItemText(String itemId, String json);
+		
 	/**
 	 * Removes the failed harvest id.
 	 *  
-	 * @param harvestId
+	 * @param itemId
 	 */
-	public void removeFailedJson(String harvestId);
+	public void removeFailedItem(String itemId);
 	
 	/**
-	 * Returns json array of failed JSON harvest requests.
+	 * Returns json array of data that failed to harvest.
 	 * @return
 	 */
-	public String getFailedRequests();
+	public String getFailedItems();
 	
 	/**
-	 * Clears failed requests.
+	 * Clears all requests.
 	 */
-	public void clearFailedRequests();
+	public void clearRequests();
+	
+	/** Clears failed items */
+	public void clearFailedItems();
 	
 }

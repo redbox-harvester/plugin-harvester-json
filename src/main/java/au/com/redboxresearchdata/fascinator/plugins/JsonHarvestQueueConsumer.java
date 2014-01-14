@@ -25,6 +25,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import javax.jms.Connection;
 import javax.jms.DeliveryMode;
@@ -48,6 +49,7 @@ import org.slf4j.LoggerFactory;
 
 import au.com.redboxresearchdata.fascinator.harvester.BaseJsonHarvester;
 import au.com.redboxresearchdata.fascinator.harvester.HarvestItem;
+import au.com.redboxresearchdata.fascinator.harvester.HarvestRequest;
 import au.com.redboxresearchdata.fascinator.jmx.JsonHarvestQueueMXBean;
 
 import com.googlecode.fascinator.api.PluginException;
@@ -149,7 +151,9 @@ public class JsonHarvestQueueConsumer implements GenericListener, JsonHarvestQue
     
     private Map<String, HarvestItem> failedJsonMap;
     
-    private List<String> failedJsonReq;
+    private List<String> failedJsonList;
+    
+    private Map<String, HarvestRequest> harvestRequests;
     
     private Map<String, Harvester> harvesters;
 
@@ -190,7 +194,8 @@ public class JsonHarvestQueueConsumer implements GenericListener, JsonHarvestQue
                     "messaging", "toolChainQueue");
             
             failedJsonMap = new HashMap<String, HarvestItem>();
-            failedJsonReq = new ArrayList<String>();
+            failedJsonList = new ArrayList<String>();
+            harvestRequests = new HashMap<String, HarvestRequest>();
             // registering managed bean...
             MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
             ObjectName mxbeanName = new ObjectName("au.com.redboxresearchdata.fascinator.plugins:type=JsonHarvestQueue");
@@ -308,7 +313,7 @@ public class JsonHarvestQueueConsumer implements GenericListener, JsonHarvestQue
 		String text = json.toString();
 		json.getJsonObject().put("error",  errmsg);
 		log.error( errmsg + text);
-		failedJsonReq.add(json.toString());
+		failedJsonList.add(json.toString());
 	}
 
 	protected synchronized void processJson(JsonSimple json)
@@ -317,11 +322,22 @@ public class JsonHarvestQueueConsumer implements GenericListener, JsonHarvestQue
 			Exception {
 		// prepare for the harvest
 		String type = json.getString(null, "type");
-		log.debug("Got request to process JSON of type:" + type);
+		String harvesterId = json.getString(null, "harvesterId");
+		String hostName = json.getString(null, "hostName");
+		String hostIp = json.getString(null, "hostIp");
+		log.debug("Got request to process JSON of type:" + type + ", harvesterId:" + harvesterId + ", hostName:" + hostName + ", hostIp:"+ hostIp);
 		if (type == null) {
 			logFailedRequest("No type specified, ignoring object....", json);
 			return;
 		}
+		if (harvesterId == null) {
+			logFailedRequest("No harvester specified, ignoring object....", json);
+			return;
+		}
+		String harvestRequestId = getHarvestRequestId();
+		HarvestRequest harvestRequest = new HarvestRequest(harvestRequestId, harvesterId, hostName, hostIp, System.currentTimeMillis());
+		harvestRequests.put(harvestRequestId, harvestRequest);
+		
 		String configFilePath = globalConfig.getString(null, "portal", "harvestFiles") + "/" + type + ".json";
 		
 		File harvestConfigFile = new File(configFilePath);
@@ -332,8 +348,9 @@ public class JsonHarvestQueueConsumer implements GenericListener, JsonHarvestQue
 		BaseJsonHarvester harvester = (BaseJsonHarvester) harvesters.get(type);
 		
 		JsonSimple data = new JsonSimple(json.getObject("data"));
-		log.debug("Data json is:" + data.toString(true));
-		List<HarvestItem> harvestList = harvester.harvest(data, type);
+		harvestRequest.setData(data.toString(true));
+		log.debug("Data json is:" + harvestRequest.getData());
+		List<HarvestItem> harvestList = harvester.harvest(data, type, harvestRequestId);
 		log.debug("Number of Objects in list:" + harvester.getItemList().size());
 		log.debug("Number of Objects in harvest list:" + harvestList.size());
 		log.debug("Number of Objects successfully harvested:" + harvester.getSuccessOidList().size());
@@ -346,7 +363,7 @@ public class JsonHarvestQueueConsumer implements GenericListener, JsonHarvestQue
 				log.info("JSON Object on the toolchain, oid:" + oid);
 			} 
 			if (item.isHarvested()) {
-				eventJsonList.add(createEventJson(item, EVENT_PROCESS_HARVESTED));				
+				eventJsonList.add(createEventJson(item, EVENT_PROCESS_HARVESTED, harvestRequest));				
 			}
 		}
 		// check if there are any failed items...
@@ -365,20 +382,21 @@ public class JsonHarvestQueueConsumer implements GenericListener, JsonHarvestQue
 					JsonSimple failedJson = new JsonSimple(jsonObj);
 					item.setData(failedJson);
 					log.error("Failed hid:" + item.getHid());
+					log.error("Failed request id:" + item.getHrid());
 					failedJsonMap.put(item.getHid(), item);
 					if (!item.isValid()) {
 						// failed validation...
 						log.error("Failed validation:" + failedJson.toString(true));
-						eventJsonList.add(createEventJson(item, EVENT_PROCESS_INVALID));
+						eventJsonList.add(createEventJson(item, EVENT_PROCESS_INVALID, harvestRequest));
 					}
 					if (item.isValid() && !item.isHarvested()) {
 						// exception thrown while harvesting...
 						log.error("Failed harvest:" + failedJson.toString(true));
-						eventJsonList.add(createEventJson(item, EVENT_PROCESS_FAIL));
+						eventJsonList.add(createEventJson(item, EVENT_PROCESS_FAIL, harvestRequest));
 					}
 				}
 			}
-			log.error(getFailedJsonList());
+			log.error(getFailedItemIds());
 		}
 		// emit the standard harvest events...
 		for (JsonObject eventJson : eventJsonList) {
@@ -392,14 +410,19 @@ public class JsonHarvestQueueConsumer implements GenericListener, JsonHarvestQue
 	 * @param eventName
 	 * @return
 	 */
-	public JsonObject createEventJson(HarvestItem item, String eventName) {
+	public JsonObject createEventJson(HarvestItem item, String eventName, HarvestRequest request) {
 		JsonObject eventJson = new JsonObject();
 		eventJson.put("hid", item.getHid());
+		eventJson.put("hrid", item.getHrid());
 		eventJson.put("oid", item.getOid());
+		eventJson.put("handledAs", item.getHandledAs());
 		eventJson.put("valid", Boolean.toString(item.isValid()));
 		eventJson.put("transformed", Boolean.toString(item.isShouldBeTransformed()));
-		eventJson.put("harvested", Boolean.toString(item.isHarvested()));
-		eventJson.put("event", eventName);
+		eventJson.put("harvested", Boolean.toString(item.isHarvested()));		
+		eventJson.put("event", eventName);		
+		eventJson.put("harvesterId", request.getHarvesterId());
+		eventJson.put("hostName", request.getHostName());
+		eventJson.put("hostIp",  request.getHostIp());		
 		return eventJson;
 	}
 	
@@ -567,16 +590,16 @@ public class JsonHarvestQueueConsumer implements GenericListener, JsonHarvestQue
 		}
 	}
 
-	public synchronized String getFailedJsonList() {
+	public synchronized String getFailedItemIds() {
 		return "[\"" + StringUtils.join(failedJsonMap.keySet(), "\",\"") + "\"]";
 	}
 
-	public synchronized String getFailedJsonText(String harvestId) {
-		return failedJsonMap.get(harvestId).getData().toString();
+	public synchronized String getFailedItemText(String itemId) {
+		return failedJsonMap.get(itemId).getData().toString();
 	}
 
-	public synchronized void setFailedJsonText(String harvestId, String json) {
-		HarvestItem item = failedJsonMap.get(harvestId);
+	public synchronized void setFailedItemText(String itemId, String json) {
+		HarvestItem item = failedJsonMap.get(itemId);
 		try {
 			item.setData(new JsonSimple(json));
 		} catch (IOException e) {
@@ -584,30 +607,33 @@ public class JsonHarvestQueueConsumer implements GenericListener, JsonHarvestQue
 		}
 	}
 
-	/**
-	 * Attempts a reharvest of the specified harvest id, removing it from the failed map.
-	 *  
-	 */
-	public synchronized void reharvestFailedJson(String harvestId) {
-		HarvestItem item = failedJsonMap.get(harvestId);
-		failedJsonMap.remove(harvestId);
-		JsonSimple jsonData = (JsonSimple)item.getData();
-		try {
-			processJson(jsonData);
-		} catch (Exception ex) {
-			log.error("Error while reharvesting JSON: " + jsonData.toString(true), ex);
-		}
+	public synchronized void removeFailedItem(String itemId) {
+		failedJsonMap.remove(itemId);
 	}
 
-	public synchronized void removeFailedJson(String harvestId) {
-		failedJsonMap.remove(harvestId);
-	}
-
-	public synchronized String getFailedRequests() {
-		return "[" + StringUtils.join(failedJsonReq, ",") + "]";
+	public synchronized String getFailedItems() {
+		return "[" + StringUtils.join(failedJsonList, ",") + "]";
 	}
 
 	public synchronized void clearFailedRequests() {
-		failedJsonReq.clear();
-	}	
+		failedJsonList.clear();
+	}
+	
+	/**
+	 * Generic implementation is a type 4 UUID String
+	 * 
+	 * @return type 4 UUID string
+	 */
+	protected String getHarvestRequestId() {
+		return UUID.randomUUID().toString();
+	}
+	
+	public synchronized void clearFailedItems() {
+		failedJsonList.clear();
+		failedJsonMap.clear();
+	}
+	
+	public synchronized void clearRequests() {
+		harvestRequests.clear();
+	}
 }
