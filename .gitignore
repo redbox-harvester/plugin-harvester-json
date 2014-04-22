@@ -8,6 +8,8 @@ target/
 
 .classpath
 
+.project
+
 bin/
 /release.properties
 /pom.xml.releaseBackup
