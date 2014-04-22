@@ -20,31 +20,18 @@ package au.com.redboxresearchdata.fascinator.harvester;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.googlecode.fascinator.common.JsonObject;
 import com.googlecode.fascinator.common.JsonSimple;
 import com.googlecode.fascinator.common.messaging.MessagingServices;
 
-/**
- * 
- * Exemplar implementation of a JSON Harvester for Service Type.
- * 
- * @author Shilo Banihit
- *
- */
-public class ServiceJsonHarvester extends BaseJsonHarvester {
-	
-    
-    /** Logging */
-    private Logger log = LoggerFactory.getLogger(MessagingServices.class);
-	
-	public ServiceJsonHarvester() {
-		super("ServiceJson", "Services JSON Harvester");
-	}
+public class MintJsonHarvester extends BaseJsonHarvester {
 
-	/**
-	 * Checks if JSON has non-null ID field as configured in the harvest config file. 
-	 * 
-	 */
+	/** Logging */
+    private Logger log = LoggerFactory.getLogger(MessagingServices.class);
+    
+    public MintJsonHarvester() {
+    	super("MintJson", "Mint Json harvester");
+    }
+    
 	@Override
 	protected boolean isValidJson(JsonSimple json) {
 		String idVal = json.getString(null, idField);
@@ -55,4 +42,5 @@ public class ServiceJsonHarvester extends BaseJsonHarvester {
 		}
 		return isValid;
 	}
+
 }
