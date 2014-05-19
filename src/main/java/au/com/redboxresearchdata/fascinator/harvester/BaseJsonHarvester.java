@@ -163,7 +163,7 @@ public abstract class BaseJsonHarvester extends GenericHarvester {
 
 	protected JsonSimple harvestConfig;
 	
-	private JsonSimple rulesConfig;
+	protected JsonSimple rulesConfig;
 
 	protected String idField;
 
@@ -189,13 +189,24 @@ public abstract class BaseJsonHarvester extends GenericHarvester {
 	@Override
 	public void init() throws HarvesterException {
 		try {
-			messaging = MessagingServices.getInstance();			
-			try {
-				harvestConfig = new JsonSimple(configFile);
-			} catch (IOException e) {
-				errorMessage = "IO Error loading main configuration file.";
-				throw new Exception(e);								
-			}			
+			messaging = MessagingServices.getInstance();
+		} catch (MessagingException ex) {
+			errorMessage = "Failed to start connection:" + ex.getMessage();
+			log.error(errorMessage);
+			throw new HarvesterException(ex);
+		}		
+		try {
+			harvestConfig = new JsonSimple(configFile);
+		} catch (IOException e) {
+			errorMessage = "IO Error loading main configuration file.";
+			log.error(errorMessage);
+			throw new HarvesterException(e);
+		}
+		setUpRules();
+	}
+	
+	protected void setUpRules() throws HarvesterException {
+		try {
 			String rulesConfigFilePath = harvestConfig.getString(null, "harvester", "rulesConfig");
 			log.debug("Initialising Harvester, using config path:" + rulesConfigFilePath);
 			rulesConfigFile = new File(rulesConfigFilePath);
@@ -235,10 +246,6 @@ public abstract class BaseJsonHarvester extends GenericHarvester {
 					"harvester", "mainPayloadId");
 			rulesConfigObject = updateHarvestFile(rulesConfigFile);
 			rulesObject = updateHarvestFile(rulesFile);			
-		} catch (MessagingException ex) {
-			errorMessage = "Failed to start connection:" + ex.getMessage();
-			log.error(errorMessage);
-			throw new HarvesterException(ex);
 		} catch (Exception e) {
 			log.error(errorMessage);
 			throw new HarvesterException(e);
