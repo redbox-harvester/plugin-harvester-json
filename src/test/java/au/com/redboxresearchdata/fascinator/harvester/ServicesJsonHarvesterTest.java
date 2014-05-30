@@ -35,7 +35,7 @@ import com.googlecode.fascinator.common.JsonSimple;
 public class ServicesJsonHarvesterTest {
 
 	private static JsonSimple validData;
-	private static ServiceJsonHarvester harvester;
+//	private static ServiceJsonHarvester harvester;
 	private static Logger log = LoggerFactory.getLogger(ServicesJsonHarvesterTest.class);
 	
 	@BeforeClass
