@@ -17,26 +17,18 @@
  ******************************************************************************/
 package au.com.redboxresearchdata.fascinator.harvester;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.lang.ObjectUtils;
-import org.apache.commons.lang.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.googlecode.fascinator.api.harvester.HarvesterException;
-import com.googlecode.fascinator.api.storage.DigitalObject;
-import com.googlecode.fascinator.api.storage.StorageException;
 import com.googlecode.fascinator.common.JsonObject;
 import com.googlecode.fascinator.common.JsonSimple;
 import com.googlecode.fascinator.common.messaging.MessagingException;
 import com.googlecode.fascinator.common.messaging.MessagingServices;
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.util.List;
 
 public class MintJsonHarvester extends BaseJsonHarvester {
 
@@ -138,22 +130,6 @@ public class MintJsonHarvester extends BaseJsonHarvester {
         return configValue;
     }
 
-    private void appendToFullPathOfHarvestKey(JsonObject harvest, String key, String appendage) throws HarvesterException {
-        Object currentValue = getHarvestKeyValue(harvest, key);
-        // current rules config path may have been updated - ensure only the first prefix of path is used
-        String updated = FilenameUtils.concat(FilenameUtils.getPrefix((String) currentValue), appendage);
-        log.debug("Updating to: " + updated);
-        harvest.put(key, updated);
-    }
-
-    private void appendToPathPrefixOfHarvestKey(JsonObject harvest, String key, String appendage) throws HarvesterException {
-        Object currentValue = getHarvestKeyValue(harvest, key);
-        // current rules config path may have been updated - ensure only the first prefix of path is used
-        String updated = FilenameUtils.concat(FilenameUtils.getPrefix((String) currentValue), appendage);
-        log.debug("Updating to: " + updated);
-        harvest.put(key, updated);
-    }
-
     private JsonObject getHarvest() throws HarvesterException {
         JsonObject harvest = this.harvestConfig.getObject("harvester");
         if (harvest instanceof JsonObject) {
@@ -165,14 +141,31 @@ public class MintJsonHarvester extends BaseJsonHarvester {
 
     }
 
-    private Object getHarvestKeyValue(JsonObject harvest, String key) throws HarvesterException {
+    private void appendToFullPathOfHarvestKey(JsonObject harvest, String key, String appendage) throws HarvesterException {
+        String currentValue = getHarvestKeyValue(harvest, key);
+        // current rules config path may have been updated - ensure only the current path is used
+        updateHarvestFileKey(harvest, key, FilenameUtils.getFullPath(currentValue), appendage);
+    }
+
+    private void appendToPathPrefixOfHarvestKey(JsonObject harvest, String key, String appendage) throws HarvesterException {
+        String currentValue = getHarvestKeyValue(harvest, key);
+        // current rules config path may have been updated - ensure only the first prefix of path is used
+        updateHarvestFileKey(harvest, key, StringUtils.substringBefore(currentValue, "/"), appendage);
+    }
+
+    private String getHarvestKeyValue(JsonObject harvest, String key) throws HarvesterException {
         Object currentValue = harvest.get(key);
         if (currentValue instanceof String) {
-            log.debug("Found current harvest config for:" + key + "is :" + currentValue);
-            return currentValue;
+            log.debug("Found current harvest config for:" + key + ", is :" + currentValue);
+            return (String)currentValue;
         } else {
             throw new HarvesterException("Unable to find current config rules path in order to update rules config.");
         }
     }
 
+    private void updateHarvestFileKey(JsonObject harvest, String key, String path, String base) {
+        String value = FilenameUtils.concat(path, base);
+        log.debug("Updating: " + key + " to: " + value);
+        harvest.put(key, value);
+    }
 }
