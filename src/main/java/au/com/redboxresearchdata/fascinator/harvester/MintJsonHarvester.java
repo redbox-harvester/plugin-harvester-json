@@ -164,7 +164,7 @@ public class MintJsonHarvester extends BaseJsonHarvester {
     }
 
     private void updateHarvestFileKey(JsonObject harvest, String key, String path, String base) {
-        String value = FilenameUtils.concat(path, base);
+        String value = FilenameUtils.concat(path, base + "/");
         log.debug("Updating: " + key + " to: " + value);
         harvest.put(key, value);
     }
