@@ -150,7 +150,7 @@ public class MintJsonHarvester extends BaseJsonHarvester {
     private void appendToPathPrefixOfHarvestKey(JsonObject harvest, String key, String appendage) throws HarvesterException {
         String currentValue = getHarvestKeyValue(harvest, key);
         // current rules config path may have been updated - ensure only the first prefix of path is used
-        updateHarvestFileKey(harvest, key, StringUtils.substringBefore(currentValue, "/"), appendage);
+        updateHarvestFileKey(harvest, key, StringUtils.substringBefore(currentValue, "/"), appendage + "/");
     }
 
     private String getHarvestKeyValue(JsonObject harvest, String key) throws HarvesterException {
@@ -164,7 +164,7 @@ public class MintJsonHarvester extends BaseJsonHarvester {
     }
 
     private void updateHarvestFileKey(JsonObject harvest, String key, String path, String base) {
-        String value = FilenameUtils.concat(path, base + "/");
+        String value = FilenameUtils.concat(path, base);
         log.debug("Updating: " + key + " to: " + value);
         harvest.put(key, value);
     }
