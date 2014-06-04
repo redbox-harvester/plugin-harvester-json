@@ -1,20 +1,20 @@
-/*******************************************************************************
+/*
  * Copyright (C) 2013 Queensland Cyber Infrastructure Foundation (http://www.qcif.edu.au/)
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ *   This program is free software: you can redistribute it and/or modify
+ *   it under the terms of the GNU General Public License as published by
+ *   the Free Software Foundation; either version 2 of the License, or
+ *   (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ *   This program is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along
- * with this program; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
- ******************************************************************************/
+ *   You should have received a copy of the GNU General Public License along
+ *   with this program; if not, write to the Free Software Foundation, Inc.,
+ *   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ */
 package au.com.redboxresearchdata.fascinator.harvester;
 
 import com.googlecode.fascinator.api.harvester.HarvesterException;
@@ -41,6 +41,8 @@ public class MintJsonHarvester extends BaseJsonHarvester {
     private static final String RULES_EXTENSION = ".json";
     private static final String RULES_KEY = "rulesConfig";
     private static final String ID_PREFIX_KEY = "recordIDPrefix";
+    private static final String ID_FIELD_KEY = "idField";
+    private static final String DEFAULT_ID_FIELD_VALUE = "ID";
 
     public MintJsonHarvester() {
         super(ID, NAME);
@@ -92,9 +94,12 @@ public class MintJsonHarvester extends BaseJsonHarvester {
         //get rulesConfig out of data
         String rulesConfig = extractStrictConfig(data, RULES_KEY);
         String recordIdInfix = extractLenientDefaultIfNullConfig(data, ID_PREFIX_KEY, RULES_KEY);
+        //TODO : need to get this from current harvest config, not incoming data
+        String idFieldValue = extractLenientConfig(data, ID_FIELD_KEY);
         JsonObject harvest = getHarvest();
-        appendToFullPathOfHarvestKey(harvest, RULES_KEY, rulesConfig + RULES_EXTENSION);
-        appendToPathPrefixOfHarvestKey(harvest, ID_PREFIX_KEY, recordIdInfix.toLowerCase());
+        appendToFullPathOfHarvestKeyValue(harvest, RULES_KEY, rulesConfig + RULES_EXTENSION);
+        appendToPathPrefixOfHarvestKeyValue(harvest, ID_PREFIX_KEY, recordIdInfix.toLowerCase());
+        updateHarvestKeyValueWithDefaultIfEmpty(harvest, ID_FIELD_KEY, idFieldValue, DEFAULT_ID_FIELD_VALUE);
         setUpRules();
         return super.harvest(data, type, requestId);
     }
@@ -103,7 +108,7 @@ public class MintJsonHarvester extends BaseJsonHarvester {
         String configValue = StringUtils.EMPTY;
         List<Object> configList = data.search(configKey);
         if (configList.size() > 0 && configList.get(0) instanceof String) {
-            log.warn("Only using first config key: " + configKey + " found for entire message set.");
+            log.warn("Only using first config key: " + configKey + ", found for entire message set.");
             configValue = (String) configList.get(0);
             log.debug("extracted config value: " + configValue);
         } else {
@@ -124,8 +129,10 @@ public class MintJsonHarvester extends BaseJsonHarvester {
         String configValue = StringUtils.EMPTY;
         try {
             configValue = extractStrictConfig(data, configKey);
+            log.info("Returning: " + configValue + ", for: " + configKey);
         } catch (HarvesterException e) {
-            log.warn("Returning empty string.");
+            log.warn(e.getMessage());
+            log.warn("Returning empty string for " + configKey);
         }
         return configValue;
     }
@@ -141,31 +148,45 @@ public class MintJsonHarvester extends BaseJsonHarvester {
 
     }
 
-    private void appendToFullPathOfHarvestKey(JsonObject harvest, String key, String appendage) throws HarvesterException {
+    private void appendToFullPathOfHarvestKeyValue(JsonObject harvest, String key, String appendage) throws HarvesterException {
         String currentValue = getHarvestKeyValue(harvest, key);
         // current rules config path may have been updated - ensure only the current path is used
-        updateHarvestFileKey(harvest, key, FilenameUtils.getFullPath(currentValue), appendage);
+        updateHarvestFileKeyValue(harvest, key, FilenameUtils.getFullPath(currentValue), appendage);
     }
 
-    private void appendToPathPrefixOfHarvestKey(JsonObject harvest, String key, String appendage) throws HarvesterException {
+    private void appendToPathPrefixOfHarvestKeyValue(JsonObject harvest, String key, String appendage) throws HarvesterException {
         String currentValue = getHarvestKeyValue(harvest, key);
         // current rules config path may have been updated - ensure only the first prefix of path is used
-        updateHarvestFileKey(harvest, key, StringUtils.substringBefore(currentValue, "/"), appendage + "/");
+        updateHarvestFileKeyValue(harvest, key, StringUtils.substringBefore(currentValue, "/"), appendage + "/");
     }
 
     private String getHarvestKeyValue(JsonObject harvest, String key) throws HarvesterException {
         Object currentValue = harvest.get(key);
         if (currentValue instanceof String) {
             log.debug("Found current harvest config for:" + key + ", is :" + currentValue);
-            return (String)currentValue;
+            return (String) currentValue;
         } else {
             throw new HarvesterException("Unable to find current config rules path in order to update rules config.");
         }
     }
 
-    private void updateHarvestFileKey(JsonObject harvest, String key, String path, String base) {
+    private void updateHarvestFileKeyValue(JsonObject harvest, String key, String path, String base) {
         String value = FilenameUtils.concat(path, base);
-        log.debug("Updating: " + key + " to: " + value);
-        harvest.put(key, value);
+        updateHarvestKeyValue(harvest, key, value);
     }
+
+    private void updateHarvestKeyValueWithDefaultIfEmpty(JsonObject harvest, String key, String value, String defaultValue) {
+        String filledValue = StringUtils.defaultIfEmpty(value.trim(), defaultValue);
+        updateHarvestKeyValue(harvest, key, filledValue);
+    }
+
+    private void updateHarvestKeyValue(JsonObject harvest, String key, String value) {
+        if (StringUtils.isNotBlank(value)) {
+            log.debug("Updating: " + key + " to: " + value);
+            harvest.put(key, value);
+        } else {
+            log.debug("Value is blank. Key: " + key + " not updated.");
+        }
+    }
+
 }
