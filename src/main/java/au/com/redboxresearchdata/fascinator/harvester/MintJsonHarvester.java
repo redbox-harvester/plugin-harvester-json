@@ -30,11 +30,14 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.List;
 
+/**
+ * Harvester for mint harvests. This is used to delegate to a rules config json file, e.g, services, languages, parties_people.
+ * TODO : update javadocs and refactor methods into separate service for use by other harvesters.
+  * @version since 1.2-SNAPSHOT
+  * @author <a href="matt@redboxresearchdata.com.au">Matt Mulholland</a>
+ */
 public class MintJsonHarvester extends BaseJsonHarvester {
 
-    /**
-     * Logging
-     */
     private static Logger log = LoggerFactory.getLogger(MintJsonHarvester.class);
     private static final String ID = "MintJson";
     private static final String NAME = "Mint Json harvester";
@@ -48,9 +51,6 @@ public class MintJsonHarvester extends BaseJsonHarvester {
         super(ID, NAME);
     }
 
-    /**
-     * Gets called by init(File) and init(String) after setting the config, annoyingly, config is private.
-     */
     @Override
     public void init() throws HarvesterException {
         try {
