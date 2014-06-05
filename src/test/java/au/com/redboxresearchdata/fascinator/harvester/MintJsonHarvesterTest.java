@@ -17,27 +17,20 @@
  ******************************************************************************/
 package au.com.redboxresearchdata.fascinator.harvester;
 
-import static org.junit.Assert.*;
-
-import java.io.File;
-
-import org.junit.After;
 import org.junit.AfterClass;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.googlecode.fascinator.api.harvester.HarvesterException;
 import com.googlecode.fascinator.common.JsonSimple;
 
-public class ServicesJsonHarvesterTest {
+public class MintJsonHarvesterTest {
 
-	private static JsonSimple validData;
+//	private static JsonSimple validData;
 //	private static ServiceJsonHarvester harvester;
-	private static Logger log = LoggerFactory.getLogger(ServicesJsonHarvesterTest.class);
-	
+//	private static Logger log = LoggerFactory.getLogger(MintJsonHarvesterTest.class);
+//
 	@BeforeClass
 	public static void setUp() throws Exception {
 //		validData = new JsonSimple(new File("src/test/resources/TestService.json"));
