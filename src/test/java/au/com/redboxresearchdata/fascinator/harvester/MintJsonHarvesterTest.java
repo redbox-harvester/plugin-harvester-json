@@ -17,13 +17,13 @@
  ******************************************************************************/
 package au.com.redboxresearchdata.fascinator.harvester;
 
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.googlecode.fascinator.common.JsonSimple;
+//import org.junit.AfterClass;
+//import org.junit.BeforeClass;
+//import org.junit.Test;
+//import org.slf4j.Logger;
+//import org.slf4j.LoggerFactory;
+//
+//import com.googlecode.fascinator.common.JsonSimple;
 
 public class MintJsonHarvesterTest {
 
@@ -31,24 +31,24 @@ public class MintJsonHarvesterTest {
 //	private static ServiceJsonHarvester harvester;
 //	private static Logger log = LoggerFactory.getLogger(MintJsonHarvesterTest.class);
 //
-	@BeforeClass
-	public static void setUp() throws Exception {
+//	@BeforeClass
+//	public static void setUp() throws Exception {
 //		validData = new JsonSimple(new File("src/test/resources/TestService.json"));
 //		harvester = new ServiceJsonHarvester();
 //		harvester.init(new File("src/test/resources/HarvestConfigServicesJson.json"));
-	}
+//	}
+//
+//	@AfterClass
+//	public static void tearDown() throws Exception {
+//	}
 
-	@AfterClass
-	public static void tearDown() throws Exception {
-	}
-
-   @Test
-	public void testIsValidJson() {
+//   @Test
+//	public void testIsValidJson() {
 //		assertTrue(harvester.isValidJson(new JsonSimple(validData.getObject("data","data"))));
-	}
+//	}
 	
-	@Test
-	public void testBuildHarvestList() {
+//	@Test
+//	public void testBuildHarvestList() {
 //		harvester.setData(new JsonSimple(validData.getObject("data")));
 //		try {
 //			harvester.buildHarvestList();
@@ -57,5 +57,5 @@ public class MintJsonHarvesterTest {
 //			e.printStackTrace();
 //		}
 //		assertEquals(1, harvester.harvestList.size());
-	}
+//	}
 }

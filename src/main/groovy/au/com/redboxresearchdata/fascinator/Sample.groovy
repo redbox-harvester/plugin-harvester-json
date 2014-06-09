@@ -19,7 +19,7 @@ package au.com.redboxresearchdata.fascinator
 
 class Sample {
 
-    def doSomething() {
-        print "this is part of groovy test!"
+    String doSomething() {
+        return  "this is part of groovy test!"
     }
 }

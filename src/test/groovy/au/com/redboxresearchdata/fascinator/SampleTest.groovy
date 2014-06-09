@@ -22,8 +22,9 @@ class SampleTest extends spock.lang.Specification {
 
     def "sample-test"() {
         given: "a new Sample class created"
-        def sample = new Sample
+        def sample = new Sample()
 
-        expect:
+        expect: "getting the output of sample"
+        sample.doSomething() == "this is part of groovy test!"
     }
 }
