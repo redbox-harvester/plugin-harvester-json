@@ -25,7 +25,7 @@ package au.com.redboxresearchdata.fascinator.harvester;
 //
 //import com.googlecode.fascinator.common.JsonSimple;
 
-public class MintJsonHarvesterTest {
+public class MintJsonHarvesterJavaTest {
 
 //	private static JsonSimple validData;
 //	private static ServiceJsonHarvester harvester;
