@@ -720,6 +720,7 @@ public abstract class BaseJsonHarvester extends GenericHarvester {
 					// merge it, overwriting similar fields...
 					storeJsonInPayload(dataJson.getJsonObject(), metaJson, object, payloadId,
 							idPrefix);
+					handledAs = HANDLING_TYPE_OVERWRITE;
 				} else {
 					handledAs = HANDLING_TYPE_IGNORE_IF_EXISTS;
 					renderPending = "false";
