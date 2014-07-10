@@ -1,0 +1,454 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+	<title>ReDBox Harvester - Client</title>
+	<link href="http://harvester-json-snapshot.redboxresearchdata.com.au//atom.xml" rel="self"/>
+	<link href="http://harvester-json-snapshot.redboxresearchdata.com.au/"/>
+	<updated>2014-07-10T05:39:53.352Z</updated>
+	<id>http://harvester-json-snapshot.redboxresearchdata.com.au/</id>
+	<author>
+		<name>Shilo Banihit</name>
+		<email></email>
+	</author>
+
+	
+		<entry>
+			<title>This is a Goodbye Blog Post</title>
+			<link href="http://harvester-json-snapshot.redboxresearchdata.com.au///posts/bye"/>
+			<updated>2014-07-10T00:06:31.000Z</updated>
+			<id>http://harvester-json-snapshot.redboxresearchdata.com.au///posts/bye</id>
+			<content type="html">&lt;!DOCTYPE html&gt;
+&lt;html lang=&quot;en&quot;&gt;
+&lt;head&gt;
+	&lt;!-- Meta --&gt;
+	&lt;meta charset=&quot;utf-8&quot; /&gt;
+	&lt;meta http-equiv=&quot;content-type&quot; content=&quot;text/html; charset=utf-8&quot; /&gt;
+
+	&lt;!-- Use the .htaccess and remove these lines to avoid edge case issues.
+		 More info: h5bp.com/i/378 --&gt;
+	&lt;meta http-equiv=&quot;X-UA-Compatible&quot; content=&quot;IE=edge,chrome=1&quot; /&gt;
+
+	&lt;!-- Our site title and description --&gt;
+	&lt;title&gt;This is a Goodbye Blog Post | ReDBox Harvester - Client&lt;/title&gt;
+	&lt;meta name=&quot;description&quot; content=&quot;Documentation for the ReDBox Harvester, a simple and flexible data integration tool.&quot; /&gt;
+	&lt;meta name=&quot;keywords&quot; content=&quot;ReDBox, Research, Data, Data Integration, Spring Integration, Spring, Groovy&quot; /&gt;
+	&lt;meta name=&quot;author&quot; content=&quot;Shilo Banihit&quot; /&gt;
+
+	&lt;!-- Output DocPad produced meta elements --&gt;
+	&lt;meta name=&quot;generator&quot; content=&quot;DocPad v6.69.0&quot; /&gt;
+
+	&lt;!-- Mobile viewport optimized: h5bp.com/viewport --&gt;
+	&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width&quot; /&gt;
+
+	&lt;!-- Icons --&gt;
+		&lt;link rel=&quot;shortcut icon&quot; href=&quot;images/icons/favicon.ico&quot;&gt;
+		&lt;link rel=&quot;apple-touch-icon-precomposed&quot; sizes=&quot;144x144&quot; href=&quot;images/icons/apple-touch-icon-144-precomposed.png&quot;&gt;
+		&lt;link rel=&quot;apple-touch-icon-precomposed&quot; sizes=&quot;114x114&quot; href=&quot;images/icons/apple-touch-icon-114-precomposed.png&quot;&gt;
+		&lt;link rel=&quot;apple-touch-icon-precomposed&quot; sizes=&quot;72x72&quot; href=&quot;images/icons/apple-touch-icon-72-precomposed.png&quot;&gt;
+		&lt;link rel=&quot;apple-touch-icon-precomposed&quot; href=&quot;images/icons/apple-touch-icon-57-precomposed.png&quot;&gt;
+
+	&lt;!-- Shims: IE6-8 support of HTML5 elements --&gt;
+	&lt;!--[if lt IE 9]&gt;
+		&lt;script async src=&quot;http://html5shim.googlecode.com/svn/trunk/html5.js&quot;&gt;&lt;/script&gt;
+	&lt;![endif]--&gt;
+
+	&lt;script type=&quot;text/javascript&quot;&gt;
+		var projName = &quot;/plugin-harvester-json&quot;;
+		var siteUrl = &quot;http://harvester-json-snapshot.redboxresearchdata.com.au/&quot;;
+		var needsRewrite = function() {
+			var pathname = location.pathname;
+			return pathname.indexOf(projName) == 0 || pathname.indexOf(&quot;/release&quot;) == 0;
+		};
+		var getNewPath = function(projName, pathName) {
+			var newPath = projName;
+			if (pathName.indexOf(projName) == -1) {
+				newPath = &quot;/release&quot;;
+				var releaseNumMatch = pathName.match(/\/release\/(.*)/);
+				if (releaseNumMatch != null &amp;&amp; releaseNumMatch[1] != &quot;&quot;) {
+					var pathCompArr = releaseNumMatch[1].split(&quot;/&quot;);
+					newPath = newPath + &quot;/&quot; + pathCompArr[0];
+				}
+			}
+			return newPath;
+		};
+		var parseUrl = function(url) {
+			var parser =  document.createElement('a');
+			parser.href = url;
+			return parser;
+		};
+		var writeElement = function(arr, prefix, suffix ) {
+			var rewrite = needsRewrite();
+			var newPath = &quot;&quot;;
+			if (rewrite) {
+				newPath = getNewPath(projName, location.pathname);
+			} 
+			for (var i=0; i&lt;arr.length; i++) {
+				var curPath = arr[i];
+				var parser = parseUrl(curPath); 
+				if (parser.host == location.host) {
+					curPath = newPath + curPath;
+				}
+				document.write(prefix+curPath+suffix);
+			}
+		};
+		
+		var writeStyles = function() {
+			var stylesArr = &quot;/styles/twitter-bootstrap.css,/styles/style.css,/styles/stickyfooter.css&quot;.split(&quot;,&quot;);
+			var prefix = &quot;&lt;link  rel='stylesheet' href='&quot;;
+			var suffix = &quot;' /&gt;&quot;;
+			writeElement(stylesArr, prefix, suffix);
+		};
+		
+		var writeScripts = function() {
+			var scriptsArr = &quot;//cdnjs.cloudflare.com/ajax/libs/jquery/1.10.2/jquery.min.js,//cdnjs.cloudflare.com/ajax/libs/modernizr/2.6.2/modernizr.min.js,/vendor/twitter-bootstrap/dist/js/bootstrap.min.js,/scripts/script.js&quot;.split(&quot;,&quot;);
+			var prefix = &quot;&lt;script defer='defer' src=\&quot;&quot;;
+			var suffix = &quot;\&quot;&gt;&lt;/ script&gt;&quot;;
+			writeElement(scriptsArr, prefix, suffix);
+		};
+		writeStyles();
+	&lt;/script&gt;
+&lt;/head&gt;
+&lt;body&gt;
+	&lt;!-- Menu --&gt;
+	&lt;div class=&quot;navbar navbar-inverse navbar-fixed-top&quot;&gt;
+		&lt;div class=&quot;container&quot;&gt;
+			&lt;div class=&quot;navbar-header&quot;&gt;
+				&lt;button type=&quot;button&quot; class=&quot;navbar-toggle&quot; data-toggle=&quot;collapse&quot; data-target=&quot;.navbar-collapse&quot;&gt;
+					&lt;span class=&quot;icon-bar&quot;&gt;&lt;/span&gt;
+					&lt;span class=&quot;icon-bar&quot;&gt;&lt;/span&gt;
+					&lt;span class=&quot;icon-bar&quot;&gt;&lt;/span&gt;
+				&lt;/button&gt;
+				&lt;div class=&quot;navbar-brand&quot;&gt;&lt;a class=&quot;navbar-link rewritable-url&quot; href=&quot;http://harvester-snapshot.redboxresearchdata.com.au/&quot;&gt;ReDBox Harvester&lt;/a&gt; - &lt;a class=&quot;navbar-link rewritable-url&quot; href=&quot;http://harvester-json-snapshot.redboxresearchdata.com.au/&quot;&gt;JSON Harvester Server &lt;/a&gt;&lt;/div&gt;
+				
+			&lt;/div&gt;
+			&lt;div class=&quot;navbar-collapse collapse&quot;&gt;
+				&lt;ul class=&quot;nav navbar-nav&quot;&gt;
+					
+						&lt;li
+							typeof=&quot;sioc:Page&quot;
+							about=&quot;/pages/overview&quot;
+							class=&quot;&quot;
+						&gt;
+							&lt;a href=&quot;/pages/overview&quot; property=&quot;dc:title&quot; class=&quot;rewritable-url&quot;&gt;
+								Overview
+							&lt;/a&gt;
+						&lt;/li&gt;
+					
+						&lt;li
+							typeof=&quot;sioc:Page&quot;
+							about=&quot;/pages/dataset&quot;
+							class=&quot;&quot;
+						&gt;
+							&lt;a href=&quot;/pages/dataset&quot; property=&quot;dc:title&quot; class=&quot;rewritable-url&quot;&gt;
+								Dataset
+							&lt;/a&gt;
+						&lt;/li&gt;
+					
+						&lt;li
+							typeof=&quot;sioc:Page&quot;
+							about=&quot;/pages/setup&quot;
+							class=&quot;&quot;
+						&gt;
+							&lt;a href=&quot;/pages/setup&quot; property=&quot;dc:title&quot; class=&quot;rewritable-url&quot;&gt;
+								Setup
+							&lt;/a&gt;
+						&lt;/li&gt;
+					
+
+					&lt;li&gt;
+					&lt;a href=&quot;/apidocs/&quot; target=&quot;_blank&quot; class=&quot;rewritable-url&quot;&gt;API&lt;/a&gt;
+					&lt;/li&gt;
+				&lt;/ul&gt;
+			&lt;/div&gt;&lt;!--/.navbar-collapse --&gt;
+		&lt;/div&gt;
+	&lt;/div&gt;
+
+	&lt;!-- Content --&gt;
+	&lt;div class=&quot;container&quot;&gt;
+		&lt;!-- Content --&gt;
+		&lt;section id=&quot;content&quot; class=&quot;content&quot;&gt;
+			&lt;article id=&quot;post&quot; class=&quot;post&quot;&gt;
+	&lt;h1&gt;This is a Goodbye Blog Post&lt;/h1&gt;
+	&lt;div class=&quot;post-content&quot;&gt;&lt;p&gt;This is a goodbye &lt;strong&gt;blog post&lt;/strong&gt;&lt;/p&gt;
+&lt;/div&gt;
+&lt;/article&gt;
+
+&lt;footer&gt;
+	
+&lt;/footer&gt;
+		&lt;/section&gt;
+	&lt;/div&gt;&lt;!-- /container --&gt;
+	&lt;!-- Footer --&gt;
+	&lt;div class=&quot;footer&quot;&gt;
+		&lt;div class=&quot;container&quot;&gt;
+			&lt;div class=&quot;col-md-6&quot;&gt;
+				&lt;div class=&quot;panel-body text-center&quot;&gt;
+					&lt;a href=&quot;http://harvester-snapshot.redboxresearchdata.com.au/&quot; class=&quot;btn btn-default btn-med rewritable-url&quot;&gt;Main Documentation&lt;/a&gt;
+				&lt;/div&gt;
+			&lt;/div&gt;
+			&lt;div class=&quot;col-md-6&quot;&gt;
+				&lt;div class=&quot;panel-body text-center&quot;&gt;
+					&lt;a href=&quot;http://harvester-json-snapshot.redboxresearchdata.com.au/&quot; class=&quot;btn btn-default btn-med rewritable-url&quot;&gt;JSON Harvester Server Documentation&lt;/a&gt;
+				&lt;/div&gt;
+			&lt;/div&gt;
+			&lt;p class=&quot;pull-left&quot;&gt;&amp;copy; 2014 &lt;a href=&quot;http://www.qcif.edu.au/&quot; target=&quot;_blank&quot;&gt;Queensland Cyber Infrastructure Foundation&lt;/a&gt;&lt;/p&gt;
+			&lt;p class=&quot;pull-right&quot;&gt;This website was last updated at 2014-07-10T05:39:53.352Z&lt;/p&gt;
+		&lt;/div&gt;
+    &lt;/div&gt;
+	&lt;!-- Scripts --&gt;
+	&lt;script type=&quot;text/javascript&quot;&gt;
+		onload = function () {
+			if (location.hostname.indexOf(&quot;github.io&quot;) &gt;= 0) {
+				location.href = siteUrl + location.pathname.replace(projName+&quot;/&quot;, &quot;&quot;) + location.search + location.hash;
+			}
+			var pathname = location.pathname;
+			if (needsRewrite()) {
+				rewriteNavLinkUrl(projName, pathname);
+				rewriteImages(projName, pathname);
+			}
+		};		
+		var rewriteNavLinkUrl = function(projName, pathName) {
+			var newPath = getNewPath(projName, pathName);			
+			for (var i = 0; i &lt; document.links.length; i++) {
+				if (document.links[i].className.indexOf(&quot;rewritable-url&quot;) &gt;= 0 ) {
+					var parser = parseUrl(document.links[i].href);
+					document.links[i].href =  parser.protocol + &quot;//&quot; + parser.host + newPath + parser.pathname + parser.search + parser.hash;
+				}
+			}			
+		};
+		var rewriteImages = function(projName, pathName) {
+			var newPath = getNewPath(projName, pathName);			
+			for (var i = 0; i &lt; document.images.length; i++) {
+				if (document.images[i].className.indexOf(&quot;rewritable-url&quot;) &gt;= 0 ) {
+					var parser = parseUrl(document.images[i].src);
+					document.images[i].src =  parser.protocol + &quot;//&quot; + parser.host + newPath + parser.pathname + parser.search + parser.hash;
+				}
+			}			
+		};
+		writeScripts();
+	&lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+</content>
+		</entry>
+	
+		<entry>
+			<title>This is a Hello Blog Post</title>
+			<link href="http://harvester-json-snapshot.redboxresearchdata.com.au///posts/hello"/>
+			<updated>2014-07-10T00:06:31.000Z</updated>
+			<id>http://harvester-json-snapshot.redboxresearchdata.com.au///posts/hello</id>
+			<content type="html">&lt;!DOCTYPE html&gt;
+&lt;html lang=&quot;en&quot;&gt;
+&lt;head&gt;
+	&lt;!-- Meta --&gt;
+	&lt;meta charset=&quot;utf-8&quot; /&gt;
+	&lt;meta http-equiv=&quot;content-type&quot; content=&quot;text/html; charset=utf-8&quot; /&gt;
+
+	&lt;!-- Use the .htaccess and remove these lines to avoid edge case issues.
+		 More info: h5bp.com/i/378 --&gt;
+	&lt;meta http-equiv=&quot;X-UA-Compatible&quot; content=&quot;IE=edge,chrome=1&quot; /&gt;
+
+	&lt;!-- Our site title and description --&gt;
+	&lt;title&gt;This is a Hello Blog Post | ReDBox Harvester - Client&lt;/title&gt;
+	&lt;meta name=&quot;description&quot; content=&quot;Documentation for the ReDBox Harvester, a simple and flexible data integration tool.&quot; /&gt;
+	&lt;meta name=&quot;keywords&quot; content=&quot;ReDBox, Research, Data, Data Integration, Spring Integration, Spring, Groovy&quot; /&gt;
+	&lt;meta name=&quot;author&quot; content=&quot;Shilo Banihit&quot; /&gt;
+
+	&lt;!-- Output DocPad produced meta elements --&gt;
+	&lt;meta name=&quot;generator&quot; content=&quot;DocPad v6.69.0&quot; /&gt;
+
+	&lt;!-- Mobile viewport optimized: h5bp.com/viewport --&gt;
+	&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width&quot; /&gt;
+
+	&lt;!-- Icons --&gt;
+		&lt;link rel=&quot;shortcut icon&quot; href=&quot;images/icons/favicon.ico&quot;&gt;
+		&lt;link rel=&quot;apple-touch-icon-precomposed&quot; sizes=&quot;144x144&quot; href=&quot;images/icons/apple-touch-icon-144-precomposed.png&quot;&gt;
+		&lt;link rel=&quot;apple-touch-icon-precomposed&quot; sizes=&quot;114x114&quot; href=&quot;images/icons/apple-touch-icon-114-precomposed.png&quot;&gt;
+		&lt;link rel=&quot;apple-touch-icon-precomposed&quot; sizes=&quot;72x72&quot; href=&quot;images/icons/apple-touch-icon-72-precomposed.png&quot;&gt;
+		&lt;link rel=&quot;apple-touch-icon-precomposed&quot; href=&quot;images/icons/apple-touch-icon-57-precomposed.png&quot;&gt;
+
+	&lt;!-- Shims: IE6-8 support of HTML5 elements --&gt;
+	&lt;!--[if lt IE 9]&gt;
+		&lt;script async src=&quot;http://html5shim.googlecode.com/svn/trunk/html5.js&quot;&gt;&lt;/script&gt;
+	&lt;![endif]--&gt;
+
+	&lt;script type=&quot;text/javascript&quot;&gt;
+		var projName = &quot;/plugin-harvester-json&quot;;
+		var siteUrl = &quot;http://harvester-json-snapshot.redboxresearchdata.com.au/&quot;;
+		var needsRewrite = function() {
+			var pathname = location.pathname;
+			return pathname.indexOf(projName) == 0 || pathname.indexOf(&quot;/release&quot;) == 0;
+		};
+		var getNewPath = function(projName, pathName) {
+			var newPath = projName;
+			if (pathName.indexOf(projName) == -1) {
+				newPath = &quot;/release&quot;;
+				var releaseNumMatch = pathName.match(/\/release\/(.*)/);
+				if (releaseNumMatch != null &amp;&amp; releaseNumMatch[1] != &quot;&quot;) {
+					var pathCompArr = releaseNumMatch[1].split(&quot;/&quot;);
+					newPath = newPath + &quot;/&quot; + pathCompArr[0];
+				}
+			}
+			return newPath;
+		};
+		var parseUrl = function(url) {
+			var parser =  document.createElement('a');
+			parser.href = url;
+			return parser;
+		};
+		var writeElement = function(arr, prefix, suffix ) {
+			var rewrite = needsRewrite();
+			var newPath = &quot;&quot;;
+			if (rewrite) {
+				newPath = getNewPath(projName, location.pathname);
+			} 
+			for (var i=0; i&lt;arr.length; i++) {
+				var curPath = arr[i];
+				var parser = parseUrl(curPath); 
+				if (parser.host == location.host) {
+					curPath = newPath + curPath;
+				}
+				document.write(prefix+curPath+suffix);
+			}
+		};
+		
+		var writeStyles = function() {
+			var stylesArr = &quot;/styles/twitter-bootstrap.css,/styles/style.css,/styles/stickyfooter.css&quot;.split(&quot;,&quot;);
+			var prefix = &quot;&lt;link  rel='stylesheet' href='&quot;;
+			var suffix = &quot;' /&gt;&quot;;
+			writeElement(stylesArr, prefix, suffix);
+		};
+		
+		var writeScripts = function() {
+			var scriptsArr = &quot;//cdnjs.cloudflare.com/ajax/libs/jquery/1.10.2/jquery.min.js,//cdnjs.cloudflare.com/ajax/libs/modernizr/2.6.2/modernizr.min.js,/vendor/twitter-bootstrap/dist/js/bootstrap.min.js,/scripts/script.js&quot;.split(&quot;,&quot;);
+			var prefix = &quot;&lt;script defer='defer' src=\&quot;&quot;;
+			var suffix = &quot;\&quot;&gt;&lt;/ script&gt;&quot;;
+			writeElement(scriptsArr, prefix, suffix);
+		};
+		writeStyles();
+	&lt;/script&gt;
+&lt;/head&gt;
+&lt;body&gt;
+	&lt;!-- Menu --&gt;
+	&lt;div class=&quot;navbar navbar-inverse navbar-fixed-top&quot;&gt;
+		&lt;div class=&quot;container&quot;&gt;
+			&lt;div class=&quot;navbar-header&quot;&gt;
+				&lt;button type=&quot;button&quot; class=&quot;navbar-toggle&quot; data-toggle=&quot;collapse&quot; data-target=&quot;.navbar-collapse&quot;&gt;
+					&lt;span class=&quot;icon-bar&quot;&gt;&lt;/span&gt;
+					&lt;span class=&quot;icon-bar&quot;&gt;&lt;/span&gt;
+					&lt;span class=&quot;icon-bar&quot;&gt;&lt;/span&gt;
+				&lt;/button&gt;
+				&lt;div class=&quot;navbar-brand&quot;&gt;&lt;a class=&quot;navbar-link rewritable-url&quot; href=&quot;http://harvester-snapshot.redboxresearchdata.com.au/&quot;&gt;ReDBox Harvester&lt;/a&gt; - &lt;a class=&quot;navbar-link rewritable-url&quot; href=&quot;http://harvester-json-snapshot.redboxresearchdata.com.au/&quot;&gt;JSON Harvester Server &lt;/a&gt;&lt;/div&gt;
+				
+			&lt;/div&gt;
+			&lt;div class=&quot;navbar-collapse collapse&quot;&gt;
+				&lt;ul class=&quot;nav navbar-nav&quot;&gt;
+					
+						&lt;li
+							typeof=&quot;sioc:Page&quot;
+							about=&quot;/pages/overview&quot;
+							class=&quot;&quot;
+						&gt;
+							&lt;a href=&quot;/pages/overview&quot; property=&quot;dc:title&quot; class=&quot;rewritable-url&quot;&gt;
+								Overview
+							&lt;/a&gt;
+						&lt;/li&gt;
+					
+						&lt;li
+							typeof=&quot;sioc:Page&quot;
+							about=&quot;/pages/dataset&quot;
+							class=&quot;&quot;
+						&gt;
+							&lt;a href=&quot;/pages/dataset&quot; property=&quot;dc:title&quot; class=&quot;rewritable-url&quot;&gt;
+								Dataset
+							&lt;/a&gt;
+						&lt;/li&gt;
+					
+						&lt;li
+							typeof=&quot;sioc:Page&quot;
+							about=&quot;/pages/setup&quot;
+							class=&quot;&quot;
+						&gt;
+							&lt;a href=&quot;/pages/setup&quot; property=&quot;dc:title&quot; class=&quot;rewritable-url&quot;&gt;
+								Setup
+							&lt;/a&gt;
+						&lt;/li&gt;
+					
+
+					&lt;li&gt;
+					&lt;a href=&quot;/apidocs/&quot; target=&quot;_blank&quot; class=&quot;rewritable-url&quot;&gt;API&lt;/a&gt;
+					&lt;/li&gt;
+				&lt;/ul&gt;
+			&lt;/div&gt;&lt;!--/.navbar-collapse --&gt;
+		&lt;/div&gt;
+	&lt;/div&gt;
+
+	&lt;!-- Content --&gt;
+	&lt;div class=&quot;container&quot;&gt;
+		&lt;!-- Content --&gt;
+		&lt;section id=&quot;content&quot; class=&quot;content&quot;&gt;
+			&lt;article id=&quot;post&quot; class=&quot;post&quot;&gt;
+	&lt;h1&gt;This is a Hello Blog Post&lt;/h1&gt;
+	&lt;div class=&quot;post-content&quot;&gt;&lt;p&gt;This is a hello &lt;strong&gt;blog post&lt;/strong&gt;&lt;/p&gt;
+&lt;/div&gt;
+&lt;/article&gt;
+
+&lt;footer&gt;
+	
+&lt;/footer&gt;
+		&lt;/section&gt;
+	&lt;/div&gt;&lt;!-- /container --&gt;
+	&lt;!-- Footer --&gt;
+	&lt;div class=&quot;footer&quot;&gt;
+		&lt;div class=&quot;container&quot;&gt;
+			&lt;div class=&quot;col-md-6&quot;&gt;
+				&lt;div class=&quot;panel-body text-center&quot;&gt;
+					&lt;a href=&quot;http://harvester-snapshot.redboxresearchdata.com.au/&quot; class=&quot;btn btn-default btn-med rewritable-url&quot;&gt;Main Documentation&lt;/a&gt;
+				&lt;/div&gt;
+			&lt;/div&gt;
+			&lt;div class=&quot;col-md-6&quot;&gt;
+				&lt;div class=&quot;panel-body text-center&quot;&gt;
+					&lt;a href=&quot;http://harvester-json-snapshot.redboxresearchdata.com.au/&quot; class=&quot;btn btn-default btn-med rewritable-url&quot;&gt;JSON Harvester Server Documentation&lt;/a&gt;
+				&lt;/div&gt;
+			&lt;/div&gt;
+			&lt;p class=&quot;pull-left&quot;&gt;&amp;copy; 2014 &lt;a href=&quot;http://www.qcif.edu.au/&quot; target=&quot;_blank&quot;&gt;Queensland Cyber Infrastructure Foundation&lt;/a&gt;&lt;/p&gt;
+			&lt;p class=&quot;pull-right&quot;&gt;This website was last updated at 2014-07-10T05:39:53.352Z&lt;/p&gt;
+		&lt;/div&gt;
+    &lt;/div&gt;
+	&lt;!-- Scripts --&gt;
+	&lt;script type=&quot;text/javascript&quot;&gt;
+		onload = function () {
+			if (location.hostname.indexOf(&quot;github.io&quot;) &gt;= 0) {
+				location.href = siteUrl + location.pathname.replace(projName+&quot;/&quot;, &quot;&quot;) + location.search + location.hash;
+			}
+			var pathname = location.pathname;
+			if (needsRewrite()) {
+				rewriteNavLinkUrl(projName, pathname);
+				rewriteImages(projName, pathname);
+			}
+		};		
+		var rewriteNavLinkUrl = function(projName, pathName) {
+			var newPath = getNewPath(projName, pathName);			
+			for (var i = 0; i &lt; document.links.length; i++) {
+				if (document.links[i].className.indexOf(&quot;rewritable-url&quot;) &gt;= 0 ) {
+					var parser = parseUrl(document.links[i].href);
+					document.links[i].href =  parser.protocol + &quot;//&quot; + parser.host + newPath + parser.pathname + parser.search + parser.hash;
+				}
+			}			
+		};
+		var rewriteImages = function(projName, pathName) {
+			var newPath = getNewPath(projName, pathName);			
+			for (var i = 0; i &lt; document.images.length; i++) {
+				if (document.images[i].className.indexOf(&quot;rewritable-url&quot;) &gt;= 0 ) {
+					var parser = parseUrl(document.images[i].src);
+					document.images[i].src =  parser.protocol + &quot;//&quot; + parser.host + newPath + parser.pathname + parser.search + parser.hash;
+				}
+			}			
+		};
+		writeScripts();
+	&lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+</content>
+		</entry>
+	
+</feed>

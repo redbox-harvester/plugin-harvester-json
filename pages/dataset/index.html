@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<!-- Meta -->
+	<meta charset="utf-8" />
+	<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+
+	<!-- Use the .htaccess and remove these lines to avoid edge case issues.
+		 More info: h5bp.com/i/378 -->
+	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+
+	<!-- Our site title and description -->
+	<title>Dataset | ReDBox Harvester - Client</title>
+	<meta name="description" content="Documentation for the ReDBox Harvester, a simple and flexible data integration tool." />
+	<meta name="keywords" content="ReDBox, Research, Data, Data Integration, Spring Integration, Spring, Groovy" />
+	<meta name="author" content="Shilo Banihit" />
+
+	<!-- Output DocPad produced meta elements -->
+	<meta name="generator" content="DocPad v6.69.0" />
+
+	<!-- Mobile viewport optimized: h5bp.com/viewport -->
+	<meta name="viewport" content="width=device-width" />
+
+	<!-- Icons -->
+		<link rel="shortcut icon" href="images/icons/favicon.ico">
+		<link rel="apple-touch-icon-precomposed" sizes="144x144" href="images/icons/apple-touch-icon-144-precomposed.png">
+		<link rel="apple-touch-icon-precomposed" sizes="114x114" href="images/icons/apple-touch-icon-114-precomposed.png">
+		<link rel="apple-touch-icon-precomposed" sizes="72x72" href="images/icons/apple-touch-icon-72-precomposed.png">
+		<link rel="apple-touch-icon-precomposed" href="images/icons/apple-touch-icon-57-precomposed.png">
+
+	<!-- Shims: IE6-8 support of HTML5 elements -->
+	<!--[if lt IE 9]>
+		<script async src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+	<![endif]-->
+
+	<script type="text/javascript">
+		var projName = "/plugin-harvester-json";
+		var siteUrl = "http://harvester-json-snapshot.redboxresearchdata.com.au/";
+		var needsRewrite = function() {
+			var pathname = location.pathname;
+			return pathname.indexOf(projName) == 0 || pathname.indexOf("/release") == 0;
+		};
+		var getNewPath = function(projName, pathName) {
+			var newPath = projName;
+			if (pathName.indexOf(projName) == -1) {
+				newPath = "/release";
+				var releaseNumMatch = pathName.match(/\/release\/(.*)/);
+				if (releaseNumMatch != null && releaseNumMatch[1] != "") {
+					var pathCompArr = releaseNumMatch[1].split("/");
+					newPath = newPath + "/" + pathCompArr[0];
+				}
+			}
+			return newPath;
+		};
+		var parseUrl = function(url) {
+			var parser =  document.createElement('a');
+			parser.href = url;
+			return parser;
+		};
+		var writeElement = function(arr, prefix, suffix ) {
+			var rewrite = needsRewrite();
+			var newPath = "";
+			if (rewrite) {
+				newPath = getNewPath(projName, location.pathname);
+			} 
+			for (var i=0; i<arr.length; i++) {
+				var curPath = arr[i];
+				var parser = parseUrl(curPath); 
+				if (parser.host == location.host) {
+					curPath = newPath + curPath;
+				}
+				document.write(prefix+curPath+suffix);
+			}
+		};
+		
+		var writeStyles = function() {
+			var stylesArr = "/styles/twitter-bootstrap.css,/styles/style.css,/styles/stickyfooter.css".split(",");
+			var prefix = "<link  rel='stylesheet' href='";
+			var suffix = "' />";
+			writeElement(stylesArr, prefix, suffix);
+		};
+		
+		var writeScripts = function() {
+			var scriptsArr = "//cdnjs.cloudflare.com/ajax/libs/jquery/1.10.2/jquery.min.js,//cdnjs.cloudflare.com/ajax/libs/modernizr/2.6.2/modernizr.min.js,/vendor/twitter-bootstrap/dist/js/bootstrap.min.js,/scripts/script.js".split(",");
+			var prefix = "<script defer='defer' src=\"";
+			var suffix = "\"></ script>";
+			writeElement(scriptsArr, prefix, suffix);
+		};
+		writeStyles();
+	</script>
+</head>
+<body>
+	<!-- Menu -->
+	<div class="navbar navbar-inverse navbar-fixed-top">
+		<div class="container">
+			<div class="navbar-header">
+				<button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+				</button>
+				<div class="navbar-brand"><a class="navbar-link rewritable-url" href="http://harvester-snapshot.redboxresearchdata.com.au/">ReDBox Harvester</a> - <a class="navbar-link rewritable-url" href="http://harvester-json-snapshot.redboxresearchdata.com.au/">JSON Harvester Server </a></div>
+				
+			</div>
+			<div class="navbar-collapse collapse">
+				<ul class="nav navbar-nav">
+					
+						<li
+							typeof="sioc:Page"
+							about="/pages/overview"
+							class=""
+						>
+							<a href="/pages/overview" property="dc:title" class="rewritable-url">
+								Overview
+							</a>
+						</li>
+					
+						<li
+							typeof="sioc:Page"
+							about="/pages/dataset"
+							class="active"
+						>
+							<a href="/pages/dataset" property="dc:title" class="rewritable-url">
+								Dataset
+							</a>
+						</li>
+					
+						<li
+							typeof="sioc:Page"
+							about="/pages/setup"
+							class=""
+						>
+							<a href="/pages/setup" property="dc:title" class="rewritable-url">
+								Setup
+							</a>
+						</li>
+					
+
+					<li>
+					<a href="/apidocs/" target="_blank" class="rewritable-url">API</a>
+					</li>
+				</ul>
+			</div><!--/.navbar-collapse -->
+		</div>
+	</div>
+
+	<!-- Content -->
+	<div class="container">
+		<!-- Content -->
+		<section id="content" class="content">
+			<article id="page" class="page">
+	<h1>Dataset</h1>
+	<div class="page-content"><p>This page contains technical information on ReDBox Dataset JSON harvester. 
+Currently, this is implemented as a Fascinator Harvester plugin that is an extension of <a href="/pages/generic" class="rewritable-url">GenericJSON Harvester</a> and used in conjunction with <a href="http://harvester-json-snapshot.redboxresearchdata.com.au/">ReDBox JSON Harvester Server</a>. This Harvester stores incoming JSON as Datasets objects and starts the ReDBox ingest process.</p>
+<h3 id="installation">Installation</h3>
+<p>If you are using the latest version of ReDBox (i.e. 1.7 and above), then you do not need to install the harvester. If you are using an older version, continue reading.</p>
+<p>The harvester must be available in the ReDBox classpath, configured in the <a href="https://github.com/redbox-mint-contrib/plugin-harvester-json/blob/master/src/main/resources/META-INF/services/com.googlecode.fascinator.api.harvester.Harvester">Java service file</a>, and the corresponding harvester configuration file must be present in the directory specified in system-config&#39;s &quot;portal.harvestFiles&quot; entry. The actual harvester configuration file is identified by convention: &quot;<Harvester Name>.json&quot;: <a href="https://github.com/redbox-mint/redbox/blob/master/config/src/main/config/home/harvest/DatasetJson.json">DatasetJson.json</a>. </p>
+<h4 id="configuration">Configuration</h4>
+<pre><code>{
+    &quot;harvester&quot;: {       
+      &quot;idField&quot;: &quot;datasetId&quot;,
+      &quot;recordIDPrefix&quot;: &quot;&quot;,
+      &quot;mainPayloadId&quot;:&quot;harvestClient.json&quot;,
+      &quot;rulesConfig&quot;:&quot;${fascinator.home}/harvest/workflows/dataset.json&quot;,
+      &quot;handlingType&quot;:&quot;park&quot;,
+      &quot;commit&quot;:true
+    }
+}
+</code></pre><table class="table table-bordered table-striped">
+  <tr>
+    <th>Field Name</th>
+    <th>Description</th>
+  </tr>
+  <tr>
+      <td>idField</td>
+      <td>
+          The field in the incoming JSON that uniquely identifies the object.
+      </td>
+  </tr>
+  <tr>
+      <td>recordIDPrefix</td>
+      <td>
+          Any arbitrary value to add to the identify to help create a unique ID, can be a blank string
+      </td>
+  </tr>
+  <tr>
+      <td>mainPayloadId</td>
+      <td>
+          The attachment name used to store the entire contents of the request message
+      </td>
+  </tr>
+  <tr>
+      <td>rulesConfig</td>
+      <td>
+          The rules config file used during the harvest
+      </td>
+  </tr>
+  <tr>
+      <td>handlingType</td>
+      <td>
+          Used to control how the harvester handles the incoming request when the object identified by the &quot;idField&quot; and the &quot;recordIDPrefix&quot; already exists in storage.<br>      </td>
+  </tr>
+  <tr>
+      <td>commit</td>
+      <td>
+          Sets the &quot;commit&quot; value in the harvester toolchain.
+      </td>
+  </tr>
+  <tr>
+      <td>handlingType</td>
+      <td>
+          &quot;park&quot;  - Saves the harvest request message inside the attachment &quot;<mainPayloadId>.parked&quot; and does not place the object on the toolchain. The object is then transformed by the transformer identified by &quot;extensionBasicVersioningTransformer&quot; (system-config.json).
+        <br/>&quot;overwrite&quot; - Overwrites the existing object&#39;s attachments with the values of the harvest request message and places the object on the toolchain.
+        <br/>&quot;ignore&quot; - Ignores the harvest request message 
+      </td>
+  </tr>
+ </table>
+
+<h3 id="json-message-format">JSON message format</h3>
+<p>For more information, see <a href="/pages/generic" class="rewritable-url">ReDBox Generic JSON Harvester</a>.</p>
+</div>
+</article>
+		</section>
+	</div><!-- /container -->
+	<!-- Footer -->
+	<div class="footer">
+		<div class="container">
+			<div class="col-md-6">
+				<div class="panel-body text-center">
+					<a href="http://harvester-snapshot.redboxresearchdata.com.au/" class="btn btn-default btn-med rewritable-url">Main Documentation</a>
+				</div>
+			</div>
+			<div class="col-md-6">
+				<div class="panel-body text-center">
+					<a href="http://harvester-json-snapshot.redboxresearchdata.com.au/" class="btn btn-default btn-med rewritable-url">JSON Harvester Server Documentation</a>
+				</div>
+			</div>
+			<p class="pull-left">&copy; 2014 <a href="http://www.qcif.edu.au/" target="_blank">Queensland Cyber Infrastructure Foundation</a></p>
+			<p class="pull-right">This website was last updated at 2014-07-10T05:39:53.352Z</p>
+		</div>
+    </div>
+	<!-- Scripts -->
+	<script type="text/javascript">
+		onload = function () {
+			if (location.hostname.indexOf("github.io") >= 0) {
+				location.href = siteUrl + location.pathname.replace(projName+"/", "") + location.search + location.hash;
+			}
+			var pathname = location.pathname;
+			if (needsRewrite()) {
+				rewriteNavLinkUrl(projName, pathname);
+				rewriteImages(projName, pathname);
+			}
+		};		
+		var rewriteNavLinkUrl = function(projName, pathName) {
+			var newPath = getNewPath(projName, pathName);			
+			for (var i = 0; i < document.links.length; i++) {
+				if (document.links[i].className.indexOf("rewritable-url") >= 0 ) {
+					var parser = parseUrl(document.links[i].href);
+					document.links[i].href =  parser.protocol + "//" + parser.host + newPath + parser.pathname + parser.search + parser.hash;
+				}
+			}			
+		};
+		var rewriteImages = function(projName, pathName) {
+			var newPath = getNewPath(projName, pathName);			
+			for (var i = 0; i < document.images.length; i++) {
+				if (document.images[i].className.indexOf("rewritable-url") >= 0 ) {
+					var parser = parseUrl(document.images[i].src);
+					document.images[i].src =  parser.protocol + "//" + parser.host + newPath + parser.pathname + parser.search + parser.hash;
+				}
+			}			
+		};
+		writeScripts();
+	</script>
+</body>
+</html>

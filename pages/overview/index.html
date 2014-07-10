@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<!-- Meta -->
+	<meta charset="utf-8" />
+	<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+
+	<!-- Use the .htaccess and remove these lines to avoid edge case issues.
+		 More info: h5bp.com/i/378 -->
+	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+
+	<!-- Our site title and description -->
+	<title>Overview | ReDBox Harvester - Client</title>
+	<meta name="description" content="Documentation for the ReDBox Harvester, a simple and flexible data integration tool." />
+	<meta name="keywords" content="ReDBox, Research, Data, Data Integration, Spring Integration, Spring, Groovy" />
+	<meta name="author" content="Shilo Banihit" />
+
+	<!-- Output DocPad produced meta elements -->
+	<meta name="generator" content="DocPad v6.69.0" />
+
+	<!-- Mobile viewport optimized: h5bp.com/viewport -->
+	<meta name="viewport" content="width=device-width" />
+
+	<!-- Icons -->
+		<link rel="shortcut icon" href="images/icons/favicon.ico">
+		<link rel="apple-touch-icon-precomposed" sizes="144x144" href="images/icons/apple-touch-icon-144-precomposed.png">
+		<link rel="apple-touch-icon-precomposed" sizes="114x114" href="images/icons/apple-touch-icon-114-precomposed.png">
+		<link rel="apple-touch-icon-precomposed" sizes="72x72" href="images/icons/apple-touch-icon-72-precomposed.png">
+		<link rel="apple-touch-icon-precomposed" href="images/icons/apple-touch-icon-57-precomposed.png">
+
+	<!-- Shims: IE6-8 support of HTML5 elements -->
+	<!--[if lt IE 9]>
+		<script async src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+	<![endif]-->
+
+	<script type="text/javascript">
+		var projName = "/plugin-harvester-json";
+		var siteUrl = "http://harvester-json-snapshot.redboxresearchdata.com.au/";
+		var needsRewrite = function() {
+			var pathname = location.pathname;
+			return pathname.indexOf(projName) == 0 || pathname.indexOf("/release") == 0;
+		};
+		var getNewPath = function(projName, pathName) {
+			var newPath = projName;
+			if (pathName.indexOf(projName) == -1) {
+				newPath = "/release";
+				var releaseNumMatch = pathName.match(/\/release\/(.*)/);
+				if (releaseNumMatch != null && releaseNumMatch[1] != "") {
+					var pathCompArr = releaseNumMatch[1].split("/");
+					newPath = newPath + "/" + pathCompArr[0];
+				}
+			}
+			return newPath;
+		};
+		var parseUrl = function(url) {
+			var parser =  document.createElement('a');
+			parser.href = url;
+			return parser;
+		};
+		var writeElement = function(arr, prefix, suffix ) {
+			var rewrite = needsRewrite();
+			var newPath = "";
+			if (rewrite) {
+				newPath = getNewPath(projName, location.pathname);
+			} 
+			for (var i=0; i<arr.length; i++) {
+				var curPath = arr[i];
+				var parser = parseUrl(curPath); 
+				if (parser.host == location.host) {
+					curPath = newPath + curPath;
+				}
+				document.write(prefix+curPath+suffix);
+			}
+		};
+		
+		var writeStyles = function() {
+			var stylesArr = "/styles/twitter-bootstrap.css,/styles/style.css,/styles/stickyfooter.css".split(",");
+			var prefix = "<link  rel='stylesheet' href='";
+			var suffix = "' />";
+			writeElement(stylesArr, prefix, suffix);
+		};
+		
+		var writeScripts = function() {
+			var scriptsArr = "//cdnjs.cloudflare.com/ajax/libs/jquery/1.10.2/jquery.min.js,//cdnjs.cloudflare.com/ajax/libs/modernizr/2.6.2/modernizr.min.js,/vendor/twitter-bootstrap/dist/js/bootstrap.min.js,/scripts/script.js".split(",");
+			var prefix = "<script defer='defer' src=\"";
+			var suffix = "\"></ script>";
+			writeElement(scriptsArr, prefix, suffix);
+		};
+		writeStyles();
+	</script>
+</head>
+<body>
+	<!-- Menu -->
+	<div class="navbar navbar-inverse navbar-fixed-top">
+		<div class="container">
+			<div class="navbar-header">
+				<button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+				</button>
+				<div class="navbar-brand"><a class="navbar-link rewritable-url" href="http://harvester-snapshot.redboxresearchdata.com.au/">ReDBox Harvester</a> - <a class="navbar-link rewritable-url" href="http://harvester-json-snapshot.redboxresearchdata.com.au/">JSON Harvester Server </a></div>
+				
+			</div>
+			<div class="navbar-collapse collapse">
+				<ul class="nav navbar-nav">
+					
+						<li
+							typeof="sioc:Page"
+							about="/pages/overview"
+							class="active"
+						>
+							<a href="/pages/overview" property="dc:title" class="rewritable-url">
+								Overview
+							</a>
+						</li>
+					
+						<li
+							typeof="sioc:Page"
+							about="/pages/dataset"
+							class=""
+						>
+							<a href="/pages/dataset" property="dc:title" class="rewritable-url">
+								Dataset
+							</a>
+						</li>
+					
+						<li
+							typeof="sioc:Page"
+							about="/pages/setup"
+							class=""
+						>
+							<a href="/pages/setup" property="dc:title" class="rewritable-url">
+								Setup
+							</a>
+						</li>
+					
+
+					<li>
+					<a href="/apidocs/" target="_blank" class="rewritable-url">API</a>
+					</li>
+				</ul>
+			</div><!--/.navbar-collapse -->
+		</div>
+	</div>
+
+	<!-- Content -->
+	<div class="container">
+		<!-- Content -->
+		<section id="content" class="content">
+			<article id="page" class="page">
+	<h1>Overview</h1>
+	<div class="page-content"><p>This plugin to ReDBox/Mint allows customizations or implementations of Harvester Client to send data to ReDBox / Mint.</p>
+<p>A high-level achitecture of the plugin components is depicted below, with the workflow starting from top-to bottom. The sections in green are the necessary components of the harvester server.</p>
+<p><img src="/images/ArchDiag.jpg" class="rewritable-url" /></p>
+<h3 id="jsonharvestqueueconsumer">JSONHarvestQueueConsumer</h3>
+<p>The main listener class that accepts harvest requests.</p>
+<h3 id="harvester-x">Harvester X</h3>
+<p>As of writing, a Fascinator Harvester plugin. All harvesters are loaded from the classpath at system up time. The actual harvester used during a harvest request is controlled by the &quot;type&quot; top-level field of the JSON document:</p>
+<pre><code>{ 
+&quot;type&quot;:&quot;DocumentType&quot;, 
+&quot;harvesterId&quot;:&quot;The ID of the Harvester&quot;,
+&quot;hostName&quot;:&quot;Host of the machine where Harvester Client executed&quot;,
+&quot;hostIp&quot;:&quot;IP of the machine where Harvester Client executed&quot;, 
+&quot;data&quot;: {        
+    // JSON object/array to harvest. 
+    ....
+    ....
+    }
+}
+</code></pre><p>As an example, please see how the Datasets are harvested through <a href="/pages/dataset/" class="rewritable-url">DatasetJsonHarvester</a>. For datasets, the type property should have the value &quot;DatasetJson&quot;.</p>
+<p>Upon start up, the main listener class attempts to load all available valid harvesters. A valid harvester must have a corresponding configuration file found on system-config&#39;s &quot;portal.harvestFiles&quot;, with the file name convention &quot;<Harvester name>.json&quot;. For datasets, the harvester configuration is <a href="https://github.com/redbox-mint/redbox/blob/master/config/src/main/config/home/harvest/DatasetJson.json">DatasetJson.json</a>. Most of the configuration items here are specific to the harvester.</p>
+<h3 id="rules-file">Rules File</h3>
+<p>As of writing, this is the typical configuration file used during a harvest. The rules file associated with the &quot;type&quot; is identified through the harvest configuration file under the property &quot;harvester.rulesConfig&quot;.</p>
+<h3 id="processing-events">Processing Events</h3>
+<p>The server provides feedback on the status of individual objects on the request. The server creates a JMS topic &quot;jsonHarvester_event&quot; where the events are published.</p>
+<p>Here is what a processing event looks like:</p>
+<pre><code>{
+   &quot;hid&quot;:&quot;cf94c343-e68b-45d8-915f-269bff74a5cb&quot;,
+   &quot;hrid&quot;:&quot;5def2345-6410-4a21-8e83-c3271cd59282&quot;,
+   &quot;oid&quot;:&quot;71e23511eb2267cdac4907d2464085bb&quot;,
+   &quot;handledAs&quot;:&quot;overwrite&quot;,
+   &quot;valid&quot;:&quot;true&quot;,
+   &quot;transformed&quot;:&quot;true&quot;,
+   &quot;harvested&quot;:&quot;true&quot;,
+   &quot;event&quot;:&quot;proc_harvested&quot;,
+   &quot;harvesterId&quot;:&quot;redboxDatasetJdbcAdapterConsole&quot;,
+   &quot;hostName&quot;:&quot;HostName&quot;,      
+   &quot;hostIp&quot;:&quot;192.168.0.1,127.0.0.1&quot;
+}
+</code></pre><p>Below is an explanation of the fields:</p>
+<table class="table table-bordered table-striped">
+  <tr>
+    <th>Fieldname</th>
+    <th>Description</th>
+  </tr>
+  <tr>
+      <td>hid</td>
+      <td>
+          The harvest item id. Distinguishes this item from the entire request. Uniquely generated on the server upon processing of the request.
+      </td>
+  </tr>
+  <tr>
+      <td>hrid</td>
+      <td>
+          The harvest request id. Identifies the request. Uniquely generated on the server upon receipt of the request.
+      </td>
+  </tr>
+  <tr>
+      <td>oid</td>
+      <td>
+          The generated OID of this object. The OID is generated from the value of the &quot;id-field&quot;. The &quot;id-field&quot; is specified on the Harvester configuration.
+      </td>
+  </tr>
+  <tr>
+      <td>handledAs</td>
+      <td>
+          The handling type for this request. See <a href="/pages/dataset/" class="rewritable-url">Dataset Harvester</a>.
+      </td>
+  </tr>
+  <tr>
+      <td>valid</td>
+      <td>
+          Whether the item passed validation. Take note that validation is Harvester specific.
+      </td>
+  </tr>
+  <tr>
+      <td>transformed</td>
+      <td>
+          Whether the item was placed on the transformer queue after harvesting.
+      </td>
+  </tr>
+  <tr>
+      <td>harvested</td>
+      <td>
+          Whether the item has been successfully harvested.
+      </td>
+  </tr>
+  <tr>
+      <td>event</td>
+      <td>
+          The status of the processing:
+
+        <br/>&quot;proc_harvested&quot; - the item processed for harvesting
+
+        <br/>&quot;proc_invalid&quot; - the item failed validation
+
+        <br/>&quot;proc_fail&quot; - the item passed validation but an exception occured while processing
+      </td>
+  </tr>
+  <tr>
+      <td>harvesterId</td>
+      <td>
+          The Harvester Client where this item came from.
+      </td>
+  </tr>
+  <tr>
+      <td>hostName</td>
+      <td>
+          The Hostname where the request came from, typically where the Harvester Client is installed.
+      </td>
+  </tr>
+  <tr>
+      <td>hostIp</td>
+      <td>
+          The IP address where the request came from, typically where the Harvester Client is installed.
+      </td>
+  </tr>
+</table>
+
+<p>This should provide enough information for interested parties to deal with the processing results as necessary.</p>
+<h3 id="jmx-inspection">JMX Inspection</h3>
+<p>The server is available as an MBean named &quot;au.com.redboxresearchdata.fascinator.plugins.JsonHarvestQueue&quot;, allowing a quick way to inspect the server. When items fail in validation or in processing these are placed in the &quot;FailedItemIds&quot; (Item id) array and the &quot;FailedItems&quot; (json) map. These data structures are not persisted upon server shutdown. Thus it is recommended that you deal with the processing events as it is broadcasted in the topic. </p>
+<table class="table table-bordered table-striped">
+  <tr>
+    <th>Attribute</th>
+    <th>Description</th>
+  </tr>
+  <tr>
+      <td>FailedItemIds</td>
+      <td>
+          The list of harvest item ids that failed processing
+      </td>
+  </tr>
+  <tr>
+      <td>FailedItems</td>
+      <td>
+          A map of JSON objects that failed processing, identified by the item id.
+      </td>
+  </tr>
+</table>
+
+<table class="table table-bordered table-striped">
+  <tr>
+    <th>Operations</th>
+    <th>Description</th>
+  </tr>
+  <tr>
+      <td>clearFailedRequests</td>
+      <td>
+          Clears the cache of failed requests
+      </td>
+  </tr>
+  <tr>
+      <td>clearRequest</td>
+      <td>
+          Each request is cached in a map. This method clears that map.
+        TODO: automatically clear the map so as not to hog memory
+      </td>
+  </tr>
+  <tr>
+      <td>getFailedItemText(itemId)</td>
+      <td>
+          Returns the failing JSON String identified by &quot;itemId&quot;, see &quot;FailedItemIds&quot; attribute
+      </td>
+  </tr>
+  <tr>
+      <td>removeFailedItem(itemId)</td>
+      <td>
+          Removes the failing request item from the failedItems map.
+      </td>
+  </tr>
+  <tr>
+      <td>setFailedText(itemId, json)</td>
+      <td>
+          Overwrites the JSON String of the item identified by &quot;itemId&quot;, with the value of the &quot;json&quot; parameter
+      </td>
+  </tr>
+  <tr>
+      <td>harvestJsonText(json)</td>
+      <td>
+          Processes the &quot;json&quot; parameter as an request. The value must be a JSON String that meets the server and <a href="/pages/dataset" class="rewritable-url">harvester</a> requirements.
+      </td>
+  </tr>
+</table>
+
+<p>That&#39;s it folks!</p>
+</div>
+</article>
+		</section>
+	</div><!-- /container -->
+	<!-- Footer -->
+	<div class="footer">
+		<div class="container">
+			<div class="col-md-6">
+				<div class="panel-body text-center">
+					<a href="http://harvester-snapshot.redboxresearchdata.com.au/" class="btn btn-default btn-med rewritable-url">Main Documentation</a>
+				</div>
+			</div>
+			<div class="col-md-6">
+				<div class="panel-body text-center">
+					<a href="http://harvester-json-snapshot.redboxresearchdata.com.au/" class="btn btn-default btn-med rewritable-url">JSON Harvester Server Documentation</a>
+				</div>
+			</div>
+			<p class="pull-left">&copy; 2014 <a href="http://www.qcif.edu.au/" target="_blank">Queensland Cyber Infrastructure Foundation</a></p>
+			<p class="pull-right">This website was last updated at 2014-07-10T05:39:53.352Z</p>
+		</div>
+    </div>
+	<!-- Scripts -->
+	<script type="text/javascript">
+		onload = function () {
+			if (location.hostname.indexOf("github.io") >= 0) {
+				location.href = siteUrl + location.pathname.replace(projName+"/", "") + location.search + location.hash;
+			}
+			var pathname = location.pathname;
+			if (needsRewrite()) {
+				rewriteNavLinkUrl(projName, pathname);
+				rewriteImages(projName, pathname);
+			}
+		};		
+		var rewriteNavLinkUrl = function(projName, pathName) {
+			var newPath = getNewPath(projName, pathName);			
+			for (var i = 0; i < document.links.length; i++) {
+				if (document.links[i].className.indexOf("rewritable-url") >= 0 ) {
+					var parser = parseUrl(document.links[i].href);
+					document.links[i].href =  parser.protocol + "//" + parser.host + newPath + parser.pathname + parser.search + parser.hash;
+				}
+			}			
+		};
+		var rewriteImages = function(projName, pathName) {
+			var newPath = getNewPath(projName, pathName);			
+			for (var i = 0; i < document.images.length; i++) {
+				if (document.images[i].className.indexOf("rewritable-url") >= 0 ) {
+					var parser = parseUrl(document.images[i].src);
+					document.images[i].src =  parser.protocol + "//" + parser.host + newPath + parser.pathname + parser.search + parser.hash;
+				}
+			}			
+		};
+		writeScripts();
+	</script>
+</body>
+</html>
