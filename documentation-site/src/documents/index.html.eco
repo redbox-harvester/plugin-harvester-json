@@ -1,0 +1,11 @@
+---
+layout: 'default'
+title: 'JSON Harvester Plugin'
+---
+<div class="jumbotron">
+	<h2>JSON Harvester ReDBox/Mint Plugin Documentation</h2>
+	<p> 
+		This documentation describes the JSON Harvester plugin for <a href="http://www.redboxresearchdata.com.au">ReDBox/Mint</a>. This plugin library allows implementations of <a href="<%= @client.url %>" class="rewritable-url">Harvester Clients</a> to send data into ReDBox/Mint. 
+		This is the <%= @site.version %> version of the documentation.
+	</p>
+</div>

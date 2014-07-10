@@ -1,0 +1,84 @@
+---
+title: Dataset
+layout: page
+pageOrder: 2
+---
+
+This page contains technical information on ReDBox Dataset JSON harvester. 
+Currently, this is implemented as a Fascinator Harvester plugin that is an extension of <a href="/pages/generic" class="rewritable-url">GenericJSON Harvester</a> and used in conjunction with [ReDBox JSON Harvester Server][siteUrl]. This Harvester stores incoming JSON as Datasets objects and starts the ReDBox ingest process.
+
+### Installation
+If you are using the latest version of ReDBox (i.e. 1.7 and above), then you do not need to install the harvester. If you are using an older version, continue reading.
+
+The harvester must be available in the ReDBox classpath, configured in the [Java service file][javaService], and the corresponding harvester configuration file must be present in the directory specified in system-config's "portal.harvestFiles" entry. The actual harvester configuration file is identified by convention: "<Harvester Name>.json": [DatasetJson.json][dsJson]. 
+
+#### Configuration
+
+	{
+	    "harvester": {       
+	      "idField": "datasetId",
+	      "recordIDPrefix": "",
+	      "mainPayloadId":"harvestClient.json",
+	      "rulesConfig":"${fascinator.home}/harvest/workflows/dataset.json",
+	      "handlingType":"park",
+	      "commit":true
+	    }
+	}
+	
+<table class="table table-bordered table-striped">
+  <tr>
+    <th>Field Name</th>
+    <th>Description</th>
+  </tr>
+  <tr>
+  	<td>idField</td>
+  	<td>
+  		The field in the incoming JSON that uniquely identifies the object.
+  	</td>
+  </tr>
+  <tr>
+  	<td>recordIDPrefix</td>
+  	<td>
+  		Any arbitrary value to add to the identify to help create a unique ID, can be a blank string
+  	</td>
+  </tr>
+  <tr>
+  	<td>mainPayloadId</td>
+  	<td>
+  		The attachment name used to store the entire contents of the request message
+  	</td>
+  </tr>
+  <tr>
+  	<td>rulesConfig</td>
+  	<td>
+  		The rules config file used during the harvest
+  	</td>
+  </tr>
+  <tr>
+  	<td>handlingType</td>
+  	<td>
+  		Used to control how the harvester handles the incoming request when the object identified by the "idField" and the "recordIDPrefix" already exists in storage.  
+  	</td>
+  </tr>
+  <tr>
+  	<td>commit</td>
+  	<td>
+  		Sets the "commit" value in the harvester toolchain.
+  	</td>
+  </tr>
+  <tr>
+  	<td>handlingType</td>
+  	<td>
+  		"park"  - Saves the harvest request message inside the attachment "<mainPayloadId>.parked" and does not place the object on the toolchain. The object is then transformed by the transformer identified by "extensionBasicVersioningTransformer" (system-config.json).
+		<br/>"overwrite" - Overwrites the existing object's attachments with the values of the harvest request message and places the object on the toolchain.
+		<br/>"ignore" - Ignores the harvest request message 
+  	</td>
+  </tr>
+ </table>
+ 
+### JSON message format
+For more information, see <a href="/pages/generic" class="rewritable-url">ReDBox Generic JSON Harvester</a>.
+ 
+[siteUrl]: <%= @site.url %>
+[javaService]:https://github.com/redbox-mint-contrib/plugin-harvester-json/blob/master/src/main/resources/META-INF/services/com.googlecode.fascinator.api.harvester.Harvester
+[dsJson]:https://github.com/redbox-mint/redbox/blob/master/config/src/main/config/home/harvest/DatasetJson.json

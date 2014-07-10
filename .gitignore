@@ -12,3 +12,6 @@ bin/
 
 
 sql/
+documentation-site/node_modules/
+documentation-site/out/
+.pydevproject

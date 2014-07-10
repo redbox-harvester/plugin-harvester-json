@@ -1,0 +1,70 @@
+```
+title: Generic JSON Harvester
+layout: page
+```
+This page describes the [GenericJson Harvester][genSrc], which is the base class for <a href="/pages/dataset" class="rewritable-url">Dataset Harvester</a>. The purpose of this class is to process the "data" of the incoming JSON, also known as the payload.
+ 
+### Overview
+
+This class is implemented as a Fascinator Harvester plugin. It processes the incoming JSON object by examining the "command" field. If there is no "command" field, then the processing defaults to harvesting the incoming object. This class is called from the [ReDBox JSON Harvester Server][siteUrl], which also requires specific JSON fields to be present.
+
+### JSON Wire Format
+
+	{ 
+	  .... Required JSON Headers ....
+	    "data": {
+	        "data":[
+	             {
+	                "<id-field>":"<id>",
+	                "owner":"owner",
+	                "attachmentList" : ["attachment1data", "attachment2data"],
+	                "customProperties" : ["customProperty1"],
+	                "varMap" : {
+	                    "customProperty1" : "${fascinator.home}/packages/<oid>.attachment1ext"           
+	                },
+	                "attachmentDestination" : {
+	                    "attachment1data":["<oid>.attachment1ext","filename2","$customProperty1"],
+	                    "attachment2data":["filename3"]
+	                },
+	                "attachment2data" : {
+	                    ... contents of attachment2 ...                   
+	                },
+	                "attachment1data": {
+	                    ... contents of attachment1...
+	                }
+	            },
+	            {
+	                "<id-field>":"<id>",
+	                "owner":"owner",
+	                "command":"delete"                       
+	            },
+	            {
+	              "<id-field>":"<id>",
+	              "owner":"owner",
+	              "command":"attach",
+	              "attachmentList" : ["attachment1"],
+	              "attachmentDestination" : {              
+	                  "attachment1":["attachment1.filename"]
+	              },
+	              "attachment1" : {
+	                  ... contents of attachment1 ....
+	              }                   
+	            }
+	        ]
+	    }
+	}
+
+### JSON Processing
+
+#### Harvest
+This is the default processing when there is no "command" field, as with the first element above. 
+The "attachmentList" array is iterated and the data specified by the fields therein are attached to the DigitalObject using  the filename(s) specified in "attachmentDestination". The "varMap" entry allows for dynamic variables, and can even specify system properties available on the server. "oid" is a special variable that will be replaced by the actual OID when the object is created on the server. The "customProperties" field specifies properties that will be saved on the DigitalObject's metadata, that ends up in the "TF-OBJ-META" file.
+
+#### Delete 
+Does what it describes, blows away the DigitalObject from storage. Use with caution.
+
+#### Attach 
+Attaches the data specified in "attachmentList" using the filename(s) specified in "attachmentDestination". The object specified in the "id-field" must exist in Storage.
+
+[genSrc]:https://github.com/redbox-harvester/plugin-harvester-json/blob/master/src/main/java/au/com/redboxresearchdata/fascinator/harvester/GenericJsonHarvester.java
+[siteUrl]: <%= @site.url %>

@@ -1,0 +1,212 @@
+```
+title: Overview
+layout: page
+pageOrder: 1
+```
+This plugin to ReDBox/Mint allows customizations or implementations of Harvester Client to send data to ReDBox / Mint.
+
+A high-level achitecture of the plugin components is depicted below, with the workflow starting from top-to bottom. The sections in green are the necessary components of the harvester server.
+
+<img src="/images/ArchDiag.jpg" class="rewritable-url" />
+
+### JSONHarvestQueueConsumer
+
+The main listener class that accepts harvest requests.
+
+### Harvester X  
+
+As of writing, a Fascinator Harvester plugin. All harvesters are loaded from the classpath at system up time. The actual harvester used during a harvest request is controlled by the "type" top-level field of the JSON document:
+
+	{ 
+    "type":"DocumentType", 
+    "harvesterId":"The ID of the Harvester",
+    "hostName":"Host of the machine where Harvester Client executed",
+    "hostIp":"IP of the machine where Harvester Client executed", 
+    "data": {        
+        // JSON object/array to harvest. 
+        ....
+        ....
+    	}
+	}
+
+As an example, please see how the Datasets are harvested through <a href="/pages/dataset/" class="rewritable-url">DatasetJsonHarvester</a>. For datasets, the type property should have the value "DatasetJson".
+
+Upon start up, the main listener class attempts to load all available valid harvesters. A valid harvester must have a corresponding configuration file found on system-config's "portal.harvestFiles", with the file name convention "<Harvester name>.json". For datasets, the harvester configuration is [DatasetJson.json][dsJson]. Most of the configuration items here are specific to the harvester.
+ 
+### Rules File 
+
+As of writing, this is the typical configuration file used during a harvest. The rules file associated with the "type" is identified through the harvest configuration file under the property "harvester.rulesConfig".
+
+### Processing Events
+
+The server provides feedback on the status of individual objects on the request. The server creates a JMS topic "jsonHarvester_event" where the events are published.
+
+Here is what a processing event looks like:
+
+	{
+	   "hid":"cf94c343-e68b-45d8-915f-269bff74a5cb",
+	   "hrid":"5def2345-6410-4a21-8e83-c3271cd59282",
+	   "oid":"71e23511eb2267cdac4907d2464085bb",
+	   "handledAs":"overwrite",
+	   "valid":"true",
+	   "transformed":"true",
+	   "harvested":"true",
+	   "event":"proc_harvested",
+	   "harvesterId":"redboxDatasetJdbcAdapterConsole",
+	   "hostName":"HostName",      
+	   "hostIp":"192.168.0.1,127.0.0.1"
+	}
+
+Below is an explanation of the fields:
+
+<table class="table table-bordered table-striped">
+  <tr>
+    <th>Fieldname</th>
+    <th>Description</th>
+  </tr>
+  <tr>
+  	<td>hid</td>
+  	<td>
+  		The harvest item id. Distinguishes this item from the entire request. Uniquely generated on the server upon processing of the request.
+  	</td>
+  </tr>
+  <tr>
+  	<td>hrid</td>
+  	<td>
+  		The harvest request id. Identifies the request. Uniquely generated on the server upon receipt of the request.
+  	</td>
+  </tr>
+  <tr>
+  	<td>oid</td>
+  	<td>
+  		The generated OID of this object. The OID is generated from the value of the "id-field". The "id-field" is specified on the Harvester configuration.
+  	</td>
+  </tr>
+  <tr>
+  	<td>handledAs</td>
+  	<td>
+  		The handling type for this request. See <a href="/pages/dataset/" class="rewritable-url">Dataset Harvester</a>.
+  	</td>
+  </tr>
+  <tr>
+  	<td>valid</td>
+  	<td>
+  		Whether the item passed validation. Take note that validation is Harvester specific.
+  	</td>
+  </tr>
+  <tr>
+  	<td>transformed</td>
+  	<td>
+  		Whether the item was placed on the transformer queue after harvesting.
+  	</td>
+  </tr>
+  <tr>
+  	<td>harvested</td>
+  	<td>
+  		Whether the item has been successfully harvested.
+  	</td>
+  </tr>
+  <tr>
+  	<td>event</td>
+  	<td>
+  		The status of the processing:
+  		
+		<br/>"proc_harvested" - the item processed for harvesting
+		
+		<br/>"proc_invalid" - the item failed validation
+		
+		<br/>"proc_fail" - the item passed validation but an exception occured while processing
+  	</td>
+  </tr>
+  <tr>
+  	<td>harvesterId</td>
+  	<td>
+  		The Harvester Client where this item came from.
+  	</td>
+  </tr>
+  <tr>
+  	<td>hostName</td>
+  	<td>
+  		The Hostname where the request came from, typically where the Harvester Client is installed.
+  	</td>
+  </tr>
+  <tr>
+  	<td>hostIp</td>
+  	<td>
+  		The IP address where the request came from, typically where the Harvester Client is installed.
+  	</td>
+  </tr>
+</table>
+
+This should provide enough information for interested parties to deal with the processing results as necessary.
+
+### JMX Inspection
+
+The server is available as an MBean named "au.com.redboxresearchdata.fascinator.plugins.JsonHarvestQueue", allowing a quick way to inspect the server. When items fail in validation or in processing these are placed in the "FailedItemIds" (Item id) array and the "FailedItems" (json) map. These data structures are not persisted upon server shutdown. Thus it is recommended that you deal with the processing events as it is broadcasted in the topic. 
+
+<table class="table table-bordered table-striped">
+  <tr>
+    <th>Attribute</th>
+    <th>Description</th>
+  </tr>
+  <tr>
+  	<td>FailedItemIds</td>
+  	<td>
+  		The list of harvest item ids that failed processing
+  	</td>
+  </tr>
+  <tr>
+  	<td>FailedItems</td>
+  	<td>
+  		A map of JSON objects that failed processing, identified by the item id.
+  	</td>
+  </tr>
+</table>
+
+<table class="table table-bordered table-striped">
+  <tr>
+    <th>Operations</th>
+    <th>Description</th>
+  </tr>
+  <tr>
+  	<td>clearFailedRequests</td>
+  	<td>
+  		Clears the cache of failed requests
+  	</td>
+  </tr>
+  <tr>
+  	<td>clearRequest</td>
+  	<td>
+  		Each request is cached in a map. This method clears that map.
+		TODO: automatically clear the map so as not to hog memory
+  	</td>
+  </tr>
+  <tr>
+  	<td>getFailedItemText(itemId)</td>
+  	<td>
+  		Returns the failing JSON String identified by "itemId", see "FailedItemIds" attribute
+  	</td>
+  </tr>
+  <tr>
+  	<td>removeFailedItem(itemId)</td>
+  	<td>
+  		Removes the failing request item from the failedItems map.
+  	</td>
+  </tr>
+  <tr>
+  	<td>setFailedText(itemId, json)</td>
+  	<td>
+  		Overwrites the JSON String of the item identified by "itemId", with the value of the "json" parameter
+  	</td>
+  </tr>
+  <tr>
+  	<td>harvestJsonText(json)</td>
+  	<td>
+  		Processes the "json" parameter as an request. The value must be a JSON String that meets the server and <a href="/pages/dataset" class="rewritable-url">harvester</a> requirements.
+  	</td>
+  </tr>
+</table>
+
+That's it folks!
+
+[dsJson]: https://github.com/redbox-mint/redbox/blob/master/config/src/main/config/home/harvest/DatasetJson.json

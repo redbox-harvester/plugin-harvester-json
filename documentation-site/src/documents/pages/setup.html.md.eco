@@ -1,0 +1,62 @@
+---
+title: Setup
+layout: page
+pageOrder: 3
+---
+
+## Installing the Plugin
+
+If you are using the latest version of ReDBox / Mint, i.e. 1.7 or above, the plugin is already installed and active. You may skip the section below.
+
+If you are using an older version of ReDBox / Mint, following the instructions below:
+
+First of all, you will need to modify the institutional build's pom.xml to add the plugin dependency, modifying the version as you see fit:
+
+	<?xml version="1.0" encoding="UTF-8"?>
+	<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+	...
+	...
+	<dependencies>
+	    ...
+	    ...
+	    ...
+	    <!-- Copy and Paste the text block -->
+	    <!-- JSON harvester plugin -->
+	    <dependency>
+	        <groupId>au.com.redboxresearchdata.fascinator</groupId>
+	        <artifactId>plugin-harvester-json</artifactId>
+	        <version>1.2-SNAPSHOT</version>
+	    </dependency>
+	    <!-- End of block -->
+	 
+	</dependencies>
+	....
+	</project>
+
+Next, is to modify the system-config.json to add the plugin:
+
+	"messaging": {
+        ...
+        ...
+        ...
+        "threads": [
+            ...
+            ...
+            ...
+            {
+                "id": "jsonHarvester",
+                "description": "Harvester queue for incoming JSON objects.",
+                "priority": "7",
+                "config": {
+                    "name": "jsonHarvester"
+                }
+            }
+        ]
+	}
+
+Also, make sure that your harvester is properly configured. 
+See ReDBox <a href="/pages/dataset">Dataset JSON Harvester</a> for ideas on how to configure your harvester.
+
+## Setting up the project in your IDE
+
+Nothing special, add it to your wokspace as you would any Maven project.
