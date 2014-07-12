@@ -438,7 +438,7 @@ public abstract class BaseJsonHarvester extends GenericHarvester {
 	}
 	
 	/**
-	 * Deletes the object specified by the oid, also deletes all attachments outside of storage as specified in the original harvest request (i.e. mainPayloadId)
+	 * Deletes the object specified by the oid, also deletes all attachments outside of storage as specified in the originalPath harvest request (i.e. mainPayloadId)
 	 * 
 	 * @param jsonData
 	 * @param oid
@@ -448,7 +448,7 @@ public abstract class BaseJsonHarvester extends GenericHarvester {
 	protected void doDelete(JsonSimple jsonData, String oid, HarvestItem item) throws HarvesterException {
 		try {
 			DigitalObject object = storage.getObject(oid);
-			// delete the attachments specified in the original harvest request outside of storage, i.e. starts with "$"
+			// delete the attachments specified in the originalPath harvest request outside of storage, i.e. starts with "$"
 			Payload payload = object.getPayload(getPayloadId(mainPayloadId, oid));
 			JsonSimple origHarvestRequest = new JsonSimple(payload.open());
 			JSONArray attachmentListArray = origHarvestRequest.getArray("attachmentList");

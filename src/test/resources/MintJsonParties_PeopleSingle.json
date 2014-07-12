@@ -1,0 +1,28 @@
+{
+  "data": [
+    {
+        "ID": "1242",
+        "Given_Name": "Monique",
+        "Other_Names": "Louise",
+        "Family_Name": "Krupp",
+        "Pref_Name": "Monique",
+        "Honorific": "Mrs",
+        "Email": "moni que.krupp@example.edu.au",
+        "Job_Title": "Lecturer",
+        "GroupIDs": "9;11;",
+        "ANZSRC_FOR_1": "1205",
+        "ANZSRC_FOR_2": "1299",
+        "ANZSRC_FOR_3": "1202",
+        "URI": "http://id.example.edu.au/people/1242",
+        "NLA_Party_Identifier": "http://nla.gov.au/nla.party-100009",
+        "ResearcherID": "http://www.researcherid.com/rid/F-1234-5686",
+        "openID": "https://plus.google.com/blahblahblah",
+        "Personal_URI": "",
+        "Personal_Homepage": "http://www.krupp.com",
+        "Staff_Profile_Homepage": "http://staff.example.edu.au/Monique.Krupp",
+        "Description": "Mrs Monique Krupp is a Lecturer at the University of Examples",
+        "recordIDPrefix": "parties/people",
+        "rulesConfig": "Parties_People"
+    }
+   ]
+}

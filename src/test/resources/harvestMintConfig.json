@@ -2,7 +2,7 @@
   "harvester": {
     "recordIDPrefix": "test-prefix/",
     "mainPayloadId": "metadata.json",
-    "rulesConfig": "originalPath/harvest/",
+    "rulesConfig": "src/test/resources/rules/",
     "handlingType": "park",
     "commit": true,
     "idField": "foo"

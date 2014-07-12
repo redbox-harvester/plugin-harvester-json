@@ -83,7 +83,7 @@ public class GenericJsonHarvester extends BaseJsonHarvester {
 	 * Merge the newly processed data with an (possible) existing data already
 	 * present, also convert the completed JSON merge into a Stream for storage.
 	 * 
-	 * This implementation just saves the data (except the owner property) to the main payload, ignoring prefix and metadata that came along the original harvest message.
+	 * This implementation just saves the data (except the owner property) to the main payload, ignoring prefix and metadata that came along the originalPath harvest message.
 	 * 
 	 * @param dataJson
 	 *            an instantiated JSON object containing data to store
