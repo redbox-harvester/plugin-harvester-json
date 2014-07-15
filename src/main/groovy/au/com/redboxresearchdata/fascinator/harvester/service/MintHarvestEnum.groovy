@@ -41,7 +41,7 @@ enum MintHarvestEnum {
         this.searcher.with {
             function = new KeySearchHelper()."${searchFunction}"
             keyList = [keyName]
-            errorMessage = "No harvest config key for: " << keyName << " found in data."
+            errorMessage = "No harvest config key for: " + keyName + " found in data."
         }
         this.updater = new Expando()
         this.updater.with {

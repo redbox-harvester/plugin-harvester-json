@@ -19,14 +19,14 @@
 package au.com.redboxresearchdata.fascinator.harvester.service
 
 import com.googlecode.fascinator.api.harvester.HarvesterException
-import groovy.util.logging.Log4j
+import groovy.util.logging.Slf4j
 import org.apache.commons.lang.StringUtils
 
 /**
  * @version
  * @author <a href="matt@redboxresearchdata.com.au">Matt Mulholland</a>
  */
-@Log4j
+@Slf4j
 class KeySearchHelper {
 
     String getKeyValueFromList(def data, def keyList) {
@@ -34,10 +34,10 @@ class KeySearchHelper {
         keyList.any {
             keyValue = getKeyValue(data, it)
             if (keyValue) {
-                log.info("Returning: " + keyValue + ", for: " + keyList[0])
+                log.debug("Returning: " + keyValue + ", for: " + keyList[0])
                 return true
             } else {
-                log.info("Continuing to search through key list alternatives...")
+                log.debug("Continuing to search through key list alternatives...")
             }
         }
         return keyValue
@@ -45,7 +45,7 @@ class KeySearchHelper {
 
     String getKeyValue(def data, def key) {
         def keyValue
-        log.info("Looking for " << key)
+        log.debug("Looking for " + key)
         def list = data.search(key);
         keyValue = getFirstMember(list)
         return keyValue

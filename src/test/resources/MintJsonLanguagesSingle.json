@@ -1,0 +1,13 @@
+{
+    "data": [
+        {
+            "alpha3": "aar",
+            "alpha3_alt": "",
+            "alpha2": "aa",
+            "english": "Afar",
+            "french": "afar",
+            "idField": "alpha3",
+            "rulesConfig": "Languages"
+        }
+    ]
+}

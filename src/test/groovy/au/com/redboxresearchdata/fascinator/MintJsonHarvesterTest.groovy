@@ -26,6 +26,7 @@ import com.googlecode.fascinator.api.storage.Storage
 import com.googlecode.fascinator.common.JsonSimple
 import com.googlecode.fascinator.common.messaging.MessagingServices
 import com.googlecode.fascinator.common.storage.StorageUtils
+import org.apache.log4j.PropertyConfigurator
 import org.powermock.reflect.Whitebox
 import org.springframework.core.io.ClassPathResource
 import spock.lang.Specification
@@ -49,6 +50,10 @@ class MintJsonHarvesterTest extends Specification {
     Payload payload
     private static String RULES_PATH = "src/test/resources/rules"
 
+    def setupSpect() {
+        def config = new ConfigSlurper().parse(getFile('log4j.groovy').toURI().toURL())
+        PropertyConfigurator.configure(config.toProperties())
+    }
 
     def setup() {
         type = "MintJson"
@@ -70,9 +75,9 @@ class MintJsonHarvesterTest extends Specification {
 
     def TestSingleServiceNoRecodIdPrefixNoIDDefault() {
         given: "incoming data has: " +
-                "rulesConfig field set to 'Services', " +
-                "no ID field set, and " +
-                "no recordID prefix set." +
+                "rulesConfig: 'Services', " +
+                "idField: (none), " +
+                "recordIDPrefix: (none), " +
                 "and only 1 record"
         this.data = getJson("MintJsonServicesSingle.json")
 
@@ -83,20 +88,20 @@ class MintJsonHarvesterTest extends Specification {
                 "list size is 1" +
                 "the harvestitem data is equal to the test data" +
                 "the harvest config has: " +
-                "- idField set to 'ID'" +
-                "- recordIDPrefix set to 'test-prefix/services/'" +
-                "- rulesConfig set to 'src/test/resources/Services.json'"
+                "- idField: 'ID'" +
+                "- recordIDPrefix: 'test-prefix/services/'" +
+                "- rulesConfig: 'src/test/resources/Services.json'"
         harvestItemList.size() == 1
         harvestItemList[0].data.toString().equals(this.data.getArray("data")[0].toString())
         this.harvestConfig.getPath("harvester", "recordIDPrefix").equals("test-prefix/services/")
         this.harvestConfig.getPath("harvester", "rulesConfig").equals(RULES_PATH + "/Services.json")
     }
 
-    def TestSinglePartiesPeopleNoRecodIdPrefixNoIDDefault() {
+    def TestSinglePartiesPeopleNoIDDefault() {
         given: "incoming data has: " +
-                "rulesConfig field set to 'Services', " +
-                "no ID field set, and " +
-                "no recordID prefix set." +
+                "rulesConfig: 'Parties_People', " +
+                "idField: (none), " +
+                "recordIDPrefix: 'parties/people', " +
                 "and only 1 record"
         this.data = getJson("MintJsonParties_PeopleSingle.json")
 
@@ -107,13 +112,37 @@ class MintJsonHarvesterTest extends Specification {
                 "list size is 1" +
                 "the harvestitem data is equal to the test data" +
                 "the harvest config has: " +
-                "- idField set to 'ID'" +
-                "- recordIDPrefix set to 'test-prefix/parties_people/'" +
-                "- rulesConfig set to 'src/test/resources/Parties_People.json'"
+                "- idField: 'ID', " +
+                "- recordIDPrefix: 'test-prefix/parties/people/', " +
+                "- rulesConfig: 'src/test/resources/Parties_People.json'"
         harvestItemList.size() == 1
         harvestItemList[0].data.toString().equals(this.data.getArray("data")[0].toString())
         this.harvestConfig.getPath("harvester", "recordIDPrefix").equals("test-prefix/parties/people/")
         this.harvestConfig.getPath("harvester", "rulesConfig").equals(RULES_PATH + "/Parties_People.json")
+    }
+
+    def TestSingleLanguagesNoRecordIdPrefix() {
+        given: "incoming data has: " +
+                "rulesConfig: 'Languages', " +
+                "idField: 'alpha3', " +
+                "recordIDPrefix: (none), " +
+                "and only 1 record"
+        this.data = getJson("MintJsonLanguagesSingle.json")
+
+        when: "harvesting Mint service data using Mint JSON harvester"
+        List<HarvestItem> harvestItemList = this.mintJsonHarvester.harvest(this.data, this.type, this.requestId)
+
+        then: "A List of 'HarvestItem' is returned" +
+                "list size is 1" +
+                "the harvestitem data is equal to the test data" +
+                "the harvest config has: " +
+                "- idField: 'alpha3'" +
+                "- recordIDPrefix: 'test-prefix/languages/'" +
+                "- rulesConfig set to 'src/test/resources/Languages.json'"
+        harvestItemList.size() == 1
+        harvestItemList[0].data.toString().equals(this.data.getArray("data")[0].toString())
+        this.harvestConfig.getPath("harvester", "recordIDPrefix").equals("test-prefix/languages/")
+        this.harvestConfig.getPath("harvester", "rulesConfig").equals(RULES_PATH + "/Languages.json")
     }
 
     JsonSimple getJson(String fileName) {

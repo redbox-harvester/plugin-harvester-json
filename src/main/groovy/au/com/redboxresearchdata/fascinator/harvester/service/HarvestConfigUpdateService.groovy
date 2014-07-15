@@ -20,15 +20,14 @@ package au.com.redboxresearchdata.fascinator.harvester.service
 
 import com.googlecode.fascinator.api.harvester.HarvesterException
 import com.googlecode.fascinator.common.JsonObject
-import groovy.util.logging.Log4j
+import groovy.util.logging.Slf4j
 import org.apache.commons.io.FilenameUtils
 import org.apache.commons.lang.StringUtils
 
 /**
  * @version
  * @author <a href="matt@redboxresearchdata.com.au">Matt Mulholland</a>
- */
-@Log4j
+ */@Slf4j
 class HarvestConfigUpdateService {
 
     def appendToFullPathOfHarvestKeyValue = {JsonObject harvest, String key, String appendage->
@@ -51,7 +50,7 @@ class HarvestConfigUpdateService {
     String getHarvestKeyValue(JsonObject harvest, String key) {
         Object currentValue = harvest.get(key);
         if (currentValue instanceof String) {
-            log.info("Found current harvest config for:" + key + ", is :" + currentValue);
+            log.debug("Found current harvest config for:" + key + ", is :" + currentValue);
             return (String) currentValue;
         } else {
             throw new HarvesterException("Unable to find current config rules path in order to update rules config.");
