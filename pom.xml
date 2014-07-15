@@ -13,8 +13,8 @@
     </parent>
     <properties>
         <fascinator.version>1.2-SNAPSHOT</fascinator.version>
-        <groovy.version>2.0.4</groovy.version>
-        <spock.version>0.7-groovy-2.0</spock.version>
+        <groovy.version>1.8.2</groovy.version>
+        <spock.version>0.7-groovy-1.8</spock.version>
     </properties>
     <dependencies>
         <dependency>
@@ -53,19 +53,19 @@
     <build>
         <plugins>
             <plugin>
-                <groupId>org.codehaus.gmaven</groupId>
-                <artifactId>gmaven-plugin</artifactId>
-                <version>1.4</version>
-                <configuration>
+                <groupId>org.codehaus.gmavenplus</groupId>
+                <artifactId>gmavenplus-plugin</artifactId>
+                <version>1.2</version>
+               <!-- <configuration>
                     <providerSelection>2.0</providerSelection>
                     <sourceEncoding>UTF-8</sourceEncoding>
-                </configuration>
+                </configuration>    -->
                 <executions>
                     <execution>
                         <goals>
                             <goal>generateStubs</goal>
                             <goal>compile</goal>
-                            <goal>generateTestStubs</goal>
+                            <goal>testGenerateStubs</goal>
                             <goal>testCompile</goal>
                         </goals>
                     </execution>
@@ -76,9 +76,90 @@
                         <artifactId>groovy-all</artifactId>
                         <version>${groovy.version}</version>
                     </dependency>
-
                 </dependencies>
             </plugin>
+            <!--<groupId>org.codehaus.gmaven</groupId>
+            <artifactId>gmaven-plugin</artifactId>
+            <version>1.4</version>
+            <configuration>
+                <providerSelection>2.0</providerSelection>
+                <sourceEncoding>UTF-8</sourceEncoding>
+            </configuration>
+            <executions>
+                <execution>
+                    <goals>
+                        <goal>generateStubs</goal>
+                        <goal>compile</goal>
+                        <goal>generateTestStubs</goal>
+                        <goal>testCompile</goal>
+                    </goals>
+                </execution>
+            </executions>
+            <dependencies>
+                <dependency>
+                    <groupId>org.codehaus.groovy</groupId>
+                    <artifactId>groovy-all</artifactId>
+                    <version>${groovy.version}</version>
+                </dependency>
+            </dependencies>  -->
+            <!--  <artifactId>maven-compiler-plugin</artifactId>
+
+              <version>3.1</version>
+              <configuration>
+                  <compilerId>groovy-eclipse-compiler</compilerId>
+
+
+              </configuration>
+              <plugin>
+                  <groupId>org.codehaus.mojo</groupId>
+                  <artifactId>build-helper-maven-plugin</artifactId>
+                  <version>1.5</version>
+                  <executions>
+                      <execution>
+                          <id>add-source</id>
+                          <phase>generate-sources</phase>
+                          <goals>
+                              <goal>add-source</goal>
+                          </goals>
+                          <configuration>
+                              <sources>
+                                  <source>src/main/groovy</source>
+                              </sources>
+                          </configuration>
+                      </execution>
+                      <execution>
+                          <id>add-test-source</id>
+                          <phase>generate-test-sources</phase>
+                          <goals>
+                              <goal>add-test-source</goal>
+                          </goals>
+                          <configuration>
+                              <sources>
+                                  <source>src/test/groovy</source>
+                              </sources>
+                          </configuration>
+                      </execution>
+                  </executions>
+              </plugin>
+              <dependencies>
+                  <dependency>
+                      <groupId>org.codehaus.groovy</groupId>
+                      <artifactId>groovy-eclipse-compiler</artifactId>
+                      <version>2.8.0-01</version>
+                  </dependency>
+
+                  <dependency>
+                      <groupId>org.codehaus.groovy</groupId>
+                      <artifactId>groovy-eclipse-batch</artifactId>
+                      <version>2.1.8-01</version>
+                  </dependency>
+                  <dependency>
+                      <groupId>org.codehaus.groovy</groupId>
+                      <artifactId>groovy-all</artifactId>
+                      <version>${groovy.version}</version>
+                  </dependency>
+              </dependencies>
+          </plugin>         -->
             <plugin>
                 <groupId>org.spockframework</groupId>
                 <artifactId>spock-maven</artifactId>
