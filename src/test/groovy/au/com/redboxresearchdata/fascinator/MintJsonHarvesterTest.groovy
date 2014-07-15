@@ -50,11 +50,6 @@ class MintJsonHarvesterTest extends Specification {
     Payload payload
     private static String RULES_PATH = "src/test/resources/rules"
 
-    def setupSpect() {
-        def config = new ConfigSlurper().parse(getFile('log4j.groovy').toURI().toURL())
-        PropertyConfigurator.configure(config.toProperties())
-    }
-
     def setup() {
         type = "MintJson"
         requestId = "0fce141a-0f05-46e9-b9ac-fbb2292e0304"
