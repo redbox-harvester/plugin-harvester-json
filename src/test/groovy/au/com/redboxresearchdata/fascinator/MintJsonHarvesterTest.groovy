@@ -50,6 +50,7 @@ class MintJsonHarvesterTest extends Specification {
     Payload payload
     private static String RULES_PATH = "src/test/resources/rules"
 
+    //TODO : mock out keysearch helper and harvestconfigupdate service so able to test interactions.
     def setup() {
         type = "MintJson"
         requestId = "0fce141a-0f05-46e9-b9ac-fbb2292e0304"
@@ -100,7 +101,7 @@ class MintJsonHarvesterTest extends Specification {
                 "and only 1 record"
         this.data = getJson("MintJsonParties_PeopleSingle.json")
 
-        when: "harvesting Mint service data using Mint JSON harvester"
+        when: "harvesting Mint parties_people data using Mint JSON harvester"
         List<HarvestItem> harvestItemList = this.mintJsonHarvester.harvest(this.data, this.type, this.requestId)
 
         then: "A List of 'HarvestItem' is returned" +
@@ -124,7 +125,7 @@ class MintJsonHarvesterTest extends Specification {
                 "and only 1 record"
         this.data = getJson("MintJsonLanguagesSingle.json")
 
-        when: "harvesting Mint service data using Mint JSON harvester"
+        when: "harvesting Mint language data using Mint JSON harvester"
         List<HarvestItem> harvestItemList = this.mintJsonHarvester.harvest(this.data, this.type, this.requestId)
 
         then: "A List of 'HarvestItem' is returned" +
