@@ -92,7 +92,7 @@ public class MintJsonHarvester extends BaseJsonHarvester {
     public List<HarvestItem> harvest(JsonSimple data, String type, String requestId)
             throws HarvesterException {
         //get rulesConfig out of data
-        String rulesConfig = extractStrictConfig(data, RULES_KEY);
+        String rulesConfig = extractStrictConfig(data, RULES_KEY,requestId);
         String recordIdInfix = extractLenientDefaultIfNullConfig(data, ID_PREFIX_KEY, RULES_KEY);
         //TODO : need to get this from current harvest config, not incoming data
         String idFieldValue = extractLenientConfig(data, ID_FIELD_KEY);
@@ -104,13 +104,13 @@ public class MintJsonHarvester extends BaseJsonHarvester {
         return super.harvest(data, type, requestId);
     }
 
-    private String extractStrictConfig(JsonSimple data, String configKey) throws HarvesterException {
+    private String extractStrictConfig(JsonSimple data, String configKey, String requestId) throws HarvesterException {
         String configValue = StringUtils.EMPTY;
         List<Object> configList = data.search(configKey);
         if (configList.size() > 0 && configList.get(0) instanceof String) {
             log.warn("Only using first config key: " + configKey + ", found for entire message set.");
             configValue = (String) configList.get(0);
-            log.debug("extracted config value: " + configValue);
+            log.debug("For harvestRequestId: "+ requestId + " extracted "+ configKey +" value: " + configValue);
         } else {
             throw new HarvesterException("No config key: " + configKey + " found in data.");
         }

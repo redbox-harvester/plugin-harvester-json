@@ -321,11 +321,12 @@ public class JsonHarvestQueueConsumer implements GenericListener, JsonHarvestQue
 			TransformerException, StorageException, MessagingException,
 			Exception {
 		// prepare for the harvest
+		String harvestRequestId = getHarvestRequestId();
 		String type = json.getString(null, "type");
 		String harvesterId = json.getString(null, "harvesterId");
 		String hostName = json.getString(null, "hostName");
 		String hostIp = json.getString(null, "hostIp");
-		log.debug("Got request to process JSON of type:" + type + ", harvesterId:" + harvesterId + ", hostName:" + hostName + ", hostIp:"+ hostIp);
+		log.debug("Got request to process JSON of type:" + type + ", harvesterId:" + harvesterId + ", hostName:" + hostName + ", hostIp:"+ hostIp +" . Assigning harvestRequestId:" + harvestRequestId);
 		if (type == null) {
 			logFailedRequest("No type specified, ignoring object....", json);
 			return;
@@ -334,7 +335,7 @@ public class JsonHarvestQueueConsumer implements GenericListener, JsonHarvestQue
 			logFailedRequest("No harvester specified, ignoring object....", json);
 			return;
 		}
-		String harvestRequestId = getHarvestRequestId();
+
 		HarvestRequest harvestRequest = new HarvestRequest(harvestRequestId, harvesterId, hostName, hostIp, System.currentTimeMillis());
 		harvestRequests.put(harvestRequestId, harvestRequest);
 		
