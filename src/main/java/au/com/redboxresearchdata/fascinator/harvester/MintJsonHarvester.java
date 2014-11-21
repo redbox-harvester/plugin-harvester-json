@@ -93,9 +93,9 @@ public class MintJsonHarvester extends BaseJsonHarvester {
             throws HarvesterException {
         //get rulesConfig out of data
         String rulesConfig = extractStrictConfig(data, RULES_KEY,requestId);
-        String recordIdInfix = extractLenientDefaultIfNullConfig(data, ID_PREFIX_KEY, RULES_KEY);
+        String recordIdInfix = extractLenientDefaultIfNullConfig(data, ID_PREFIX_KEY, RULES_KEY,requestId);
         //TODO : need to get this from current harvest config, not incoming data
-        String idFieldValue = extractLenientConfig(data, ID_FIELD_KEY);
+        String idFieldValue = extractLenientConfig(data, ID_FIELD_KEY,requestId);
         JsonObject harvest = getHarvest();
         appendToFullPathOfHarvestKeyValue(harvest, RULES_KEY, rulesConfig + RULES_EXTENSION);
         appendToPathPrefixOfHarvestKeyValue(harvest, ID_PREFIX_KEY, recordIdInfix.toLowerCase());
@@ -117,18 +117,18 @@ public class MintJsonHarvester extends BaseJsonHarvester {
         return configValue;
     }
 
-    private String extractLenientDefaultIfNullConfig(JsonSimple data, String configKey, String configKeyDefault) {
-        String configValue = extractLenientConfig(data, configKey);
+    private String extractLenientDefaultIfNullConfig(JsonSimple data, String configKey, String configKeyDefault, String requestId) {
+        String configValue = extractLenientConfig(data, configKey, requestId);
         if (StringUtils.isBlank(configValue)) {
-            configValue = extractLenientConfig(data, configKeyDefault);
+            configValue = extractLenientConfig(data, configKeyDefault,requestId);
         }
         return configValue;
     }
 
-    private String extractLenientConfig(JsonSimple data, String configKey) {
+    private String extractLenientConfig(JsonSimple data, String configKey, String requestId) {
         String configValue = StringUtils.EMPTY;
         try {
-            configValue = extractStrictConfig(data, configKey);
+            configValue = extractStrictConfig(data, configKey, requestId);
             log.info("Returning: " + configValue + ", for: " + configKey);
         } catch (HarvesterException e) {
             log.warn(e.getMessage());
