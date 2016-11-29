@@ -48,7 +48,7 @@
   	</plugins>
   </build>
   <scm>
-    <url>https://github.com/redbox-harvester/plugin-harvester-json</url>
+    <url>scm:git://github.com/redbox-harvester/plugin-harvester-json.git</url>
     <developerConnection>scm:git:https://github.com/redbox-harvester/plugin-harvester-json.git</developerConnection>
     <connection>scm:git://github.com/redbox-harvester/plugin-harvester-json.git</connection>
     <tag>HEAD</tag>
