@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>au.com.redboxresearchdata.fascinator</groupId>
   <artifactId>plugin-harvester-json</artifactId>
-  <version>1.4-SNAPSHOT</version>
+  <version>1.4</version>
   <name>Fascinator - Plugin - Harvester - JSON (Redbox-Mint)</name>
   <parent>
     <artifactId>organisation</artifactId>
@@ -17,17 +17,17 @@
     <dependency>
       <groupId>com.googlecode.the-fascinator</groupId>
       <artifactId>fascinator-common</artifactId>
-      <version>1.4-SNAPSHOT</version>
+      <version>1.4</version>
     </dependency>
     <dependency>
       <groupId>com.googlecode.the-fascinator</groupId>
       <artifactId>fascinator-core</artifactId>
-      <version>1.4-SNAPSHOT</version>
+      <version>1.4</version>
     </dependency>
     <dependency>
 		<groupId>com.googlecode.the-fascinator.plugins</groupId>
 		<artifactId>plugin-transformer-basicVersioning</artifactId>
-		<version>1.2-SNAPSHOT</version>
+		<version>1.2</version>
 	</dependency>
     <dependency>
       <groupId>junit</groupId>
